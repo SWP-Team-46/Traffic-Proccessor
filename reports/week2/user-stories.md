@@ -14,7 +14,7 @@ so that I can quickly verify that the TP is correctly seeing traffic on the netw
 **Requirement status:** Active
 **MoSCoW priority:** Must Have
 
-As a home user,
+As a ~~home user~~ network administrator,
 I want to view live packet counters and basic traffic graphs through a web‑based management UI,
 so that I can intuitively understand and rate my metrics.
 
@@ -25,7 +25,7 @@ so that I can intuitively understand and rate my metrics.
 **Requirement status:** Active
 **MoSCoW priority:** Must Have
 
-As a home user,
+As a ~~home user~~ network administrato,
 I want to have the possibility to run the Traffic Processor inside a VM,
 so that I can test and validate the platform without dedicated hardware.
 
@@ -48,7 +48,7 @@ so that I can detect unusual connection patterns.
 **MoSCoW priority:** Should Have
 
 As a network administrator,
-I want to define a list of IP addresses or ports to block, and have the TP drop those packets,
+I want to define a list of IP addresses or ports to block/allow, and have the TP drop those packets,
 so that I can prevent access to known malicious or undesirable destinations.
 
 ---
@@ -70,7 +70,7 @@ so that I can produce audit reports or investigate past incidents.
 **MoSCoW priority:** Could Have
 
 As a network administrator,
-I want to designate certain traffic to be encapsulated and forwarded to a Gateway Node instead of its original destination,
+I want to designate certain traffic to be encapsulated and forwarded through Gateway Node,
 so that my traffic appears to originate from the gateway's location.
 
 ---
@@ -89,7 +89,7 @@ so that I can analyse suspicious traffic with tools like Wireshark.
 ## US-09: Monitor TP Health and Failure Behaviour
 
 **Requirement status:** Active
-**MoSCoW priority:** Should Have
+**MoSCoW priority:** Could Have
 
 As a network administrator,
 I want to configure a fail‑open or fail‑close behaviour for the TP,
