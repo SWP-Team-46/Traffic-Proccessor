@@ -122,7 +122,7 @@ so that I can increase traffic capacity of the component.
 ## US-12: Graphical representation
 
 **Requirement status:** Active
-**MoSCoW priority:** Must Have
+**MoSCoW priority:** Should Have
 
 As a network administrator,
 I want to view metrics from TP as dynamic graphs through a web‑based management UI,
