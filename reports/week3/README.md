@@ -24,9 +24,9 @@ Report on which customer feedback points from Assignment 2 were addressed in MVP
 
 [**Link to the current Sprint milestone as the authoritative source for the Sprint Goal, Sprint dates, and current Sprint scope**](https://github.com/mrZom49/Traffic-Proccessor-SWP-46/milestone/1)
 
-**Total Product Backlog size in Story Points: 145**
+**Total Product Backlog size in Story Points: 146**
 
-**Total current Sprint size in Story Points: 10**
+**Total current Sprint size in Story Points: 11**
 
 Link to the MVP version field, filtered view, or equivalent grouped view showing the MVP v1 scope.
 
