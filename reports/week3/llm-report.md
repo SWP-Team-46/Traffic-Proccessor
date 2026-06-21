@@ -1,0 +1,2 @@
+- Transcript was done by canva and microsoft word (not sure if they do it via AI)
+- Deepseek was used for translating the transcript
