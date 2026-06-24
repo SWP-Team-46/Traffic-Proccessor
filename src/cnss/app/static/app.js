@@ -12,11 +12,14 @@ const packetNodes = {
 };
 
 const params = new URLSearchParams(window.location.search);
-const defaultSocketUrl =
-  window.location.protocol === "file:"
-    ? "ws://localhost:8080/ws"
-    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`;
-const socketUrl = params.get("ws") || defaultSocketUrl;
+const isLocalFrontend =
+  window.location.protocol === "file:" ||
+  (["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+    window.location.port !== "8080");
+const defaultApiUrl = isLocalFrontend
+  ? "http://localhost:8080/packets"
+  : `${window.location.origin}/packets`;
+const apiUrl = params.get("api") || defaultApiUrl;
 
 const stats = {
   status: "offline",
@@ -30,76 +33,64 @@ const stats = {
   other_packets: 0,
 };
 
-let socket;
-let reconnectTimer;
-let bytesOnly = false;
+let pollTimer;
+let mode = "bytes";
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString();
 }
 
 function render() {
-  statusDiode.classList.toggle("offline", stats.status !== "online");
-  packetTypes.hidden = bytesOnly;
-  modeButton.textContent = bytesOnly ? "Show packets" : "Bytes only";
+  const isOnline = stats.status === "online";
+  const isPacketMode = mode === "packets";
 
-  primaryLabel.textContent = bytesOnly ? "Total bytes" : "Total packets";
-  primaryValue.textContent = formatNumber(bytesOnly ? stats.total_bytes : stats.total_packets);
-  rateValue.textContent = bytesOnly
-    ? `${formatNumber(stats.bytes_per_second)} bytes/s`
-    : `${formatNumber(stats.packets_per_second)} packets/s`;
+  statusDiode.classList.toggle("offline", !isOnline);
+  packetTypes.hidden = !isPacketMode;
+  modeButton.textContent = isPacketMode ? "Show bytes" : "Show packets";
+
+  primaryLabel.textContent = isPacketMode ? "Packets per second" : "Bytes per second";
+  primaryValue.textContent = isPacketMode
+    ? `${formatNumber(stats.packets_per_second)} packets/s`
+    : `${formatNumber(stats.bytes_per_second)} B/s`;
+  rateValue.textContent = isOnline
+    ? isPacketMode
+      ? `${formatNumber(stats.total_packets)} total packets`
+      : `${formatNumber(stats.total_bytes)} total bytes`
+    : "Waiting for backend data";
 
   Object.entries(packetNodes).forEach(([key, node]) => {
     node.textContent = formatNumber(stats[key]);
   });
 }
 
-function readPayload(data) {
-  if (typeof data !== "string") {
-    return;
-  }
-
-  try {
-    const payload = JSON.parse(data);
-    Object.assign(stats, payload);
-    render();
-  } catch {
-    return;
-  }
+function readPayload(payload) {
+  Object.assign(stats, payload);
+  render();
 }
 
-function connect() {
-  socket = new WebSocket(socketUrl);
+async function fetchStats() {
+  try {
+    const response = await fetch(apiUrl, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`);
+    }
 
-  socket.addEventListener("open", () => {
-    socket.send(JSON.stringify({ type: "get_stats" }));
-  });
-
-
-  socket.addEventListener("message", (event) => {
-    readPayload(event.data);
-  });
-
-  socket.addEventListener("close", () => {
+    readPayload(await response.json());
+  } catch {
     stats.status = "offline";
     render();
-    reconnectTimer = window.setTimeout(connect, 1000);
-  });
-
-  socket.addEventListener("error", () => {
-    socket.close();
-  });
+  }
 }
 
 window.addEventListener("beforeunload", () => {
-  window.clearTimeout(reconnectTimer);
-  socket?.close();
+  window.clearInterval(pollTimer);
 });
 
 modeButton.addEventListener("click", () => {
-  bytesOnly = !bytesOnly;
+  mode = mode === "bytes" ? "packets" : "bytes";
   render();
 });
 
 render();
-connect();
+fetchStats();
+pollTimer = window.setInterval(fetchStats, 1000);
