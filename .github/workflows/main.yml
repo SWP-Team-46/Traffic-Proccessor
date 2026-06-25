@@ -15,13 +15,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2. Set up Python (for linting and testing)
+    # 2. Set up Python
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    # 3. Install dependencies (if you have a requirements.txt or pyproject.toml)
+    # 3. Install dependencies (requirements.txt or pyproject.toml)
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -30,7 +30,7 @@ jobs:
         # pip install -r src/Traffic_Processor/requirements.txt
         # pip install -r src/cnss/requirements.txt
 
-    # 4. Lint with flake8 (optional but recommended)
+    # 4. Lint with flake8
     - name: Lint with flake8
       run: |
         flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -40,16 +40,17 @@ jobs:
     - name: Build Docker images
       run: |
         cd src
-        docker-compose build
+        docker compose build
 
-    # 6. Run tests inside Docker containers (if you have tests)
+    # 6. Run tests inside Docker containers (If avalible
     - name: Run tests
       run: |
         cd src
-        docker-compose up -d
+        docker compose up -d
         # Wait for services to be ready
         sleep 10
         # Run your test commands here, e.g.:
-        # docker-compose exec tproc pytest
-        # docker-compose exec cnss pytest
-        docker-compose down
+        # docker compose exec tproc pytest
+        # docker compose exec cnss pytest
+        docker compose down
+
