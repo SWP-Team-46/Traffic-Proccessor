@@ -1,10 +1,14 @@
 from contextlib import contextmanager
-from random import randint
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .core.config import DEV_MODE, logger
+from .schemes.packet import Packet
+
+last_info: Packet = None
 
 
 @contextmanager
@@ -17,6 +21,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI()
 origins = ["*"]
+static_dir = Path(__file__).parent / "static"
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +31,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 
 @app.get("/root")
 def root():
@@ -34,7 +41,17 @@ def root():
 
 @app.get('/packets')
 def packets():
+    if last_info is not None:
+        return last_info.model_dump()
     return {
-        'in_packets': randint(0, 1000),
-        'out_packets': randint(0, 1000)
+        "status": "no information"
+    }
+
+
+@app.post('/')
+def load(body: Packet):
+    global last_info
+    last_info = body
+    return {
+        "status": "ok"
     }

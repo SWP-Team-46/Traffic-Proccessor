@@ -70,3 +70,4 @@ jobs:
         
         echo "All containers are running"
         docker compose down
+
