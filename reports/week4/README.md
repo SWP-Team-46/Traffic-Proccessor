@@ -12,7 +12,7 @@
 - 1) Sprint Goal: Unite CN and TP, implement separate counters for incoming/outgoing packets, and improve documentation.
   2) Sprint Dates: 22/06/2026 – 28/06/2026
   3) Scope Summary: Combine cn.py and tproc.py into a single script (tproc.py), add separate counters for incoming/outgoing traffic, and produce comprehensive documentation for the release.
-- Total story point in this sprint is **8**
+- Total story point in this sprint is **11**
 - TP and CN are now united, TP now counts incoming/outcoming packets, more documentation
 - [Deployed Product](http://147.45.234.218:8080)
 - [README](/README.md)
@@ -35,7 +35,7 @@
    - Coverage Report: Generated in CI as coverage-report artifact
    - CI Test Logs: [Available in GitHub Actions workflow runs](https://github.com/SWP-Team-46/Traffic-Proccessor/actions/runs/28325503855/job/83914700451)
 - [TP unit tests](/src/Traffic_Processor/test_TP+CN.py)
-- Links to integration tests.
+- [Integration tests](/src/cnss/tests/cnss_test.py)
 - Automated quality requirement tests [description](https://github.com/SWP-Team-46/Traffic-Proccessor/blob/main/docs/quality-requirement-tests.md), [code](https://github.com/SWP-Team-46/Traffic-Proccessor/blob/main/src/qr_test.py).
 - [CI pipeline](/.github/workflows/main.yml)
 - [Protected-default-branch CI run](https://github.com/SWP-Team-46/Traffic-Proccessor/actions/runs/28325503855)
@@ -48,7 +48,7 @@
 - The CI pipeline, test suite, and coverage thresholds established in Assignment 4 will become mandatory gates for every future pull request blocking merges if linting, unit tests, or coverage requirements fail. As new features are added, the test suite must grow alongside them to prevent regressions and maintain the coverage baseline. Finally, the Definition of Done will formally tie story completion to passing all CI checks and smoke tests, ensuring that "done" always means "production-ready"
 - [v1.1.0](https://github.com/SWP-Team-46/Traffic-Proccessor/releases/tag/1.1.0)
 - [CHANGELOG](/CHANGELOG.md)
-- Public sanitized demo video shorter than two minutes.
+- [Public sanitized demo video](https://drive.google.com/file/d/1iLPz6sNQj9lF-MKAiMHPLB9ERJgTGxWr/view?usp=drive_link)
 - UAT results summary:
 
 | UAT | Description | Result |
@@ -68,7 +68,7 @@ No blocking issues were observed; only minor improvements to UAT‑003 instructi
 - Summary of the next steps:
   - Sprint 3 (29/06/2026 – 5/07/2026): Begin work on additional features (to be defined)
   - Sprint 4 (6/07/2026 – 12/07/2026): Further enhancements and polish
-- Contribution traceability table mapping each team member to issues, PRs/MRs, review activity, testing, quality, automation, or documentation work.
+- Contribution traceability table mapping each team member to issues, PRs/MRs, review activity, testing, quality, automation, or documentation work:
   
 | Team member | Issues authored | PRs authored | PRs reviewed | Testing work | Quality work | Automation / DevOps | Documentation work | Primary contribution areas |
 |---|---:|---:|---:|---|---|---|---|---|
@@ -79,16 +79,15 @@ No blocking issues were observed; only minor improvements to UAT‑003 instructi
 | `TimLih-h` | 1 | 10 | 21 | PRs #50 and #54 maintained the testing branch; PR #51 prepared the Traffic Processor for testing; open PR #84 finalized quality-requirement tests. | PR #84 mapped quality tests to issues #41–#43; issue #21 tracked design reworking. | No directly evidenced authored automation PR was identified. | PR #78 completed missing `/docs` and week-report documentation; PR #26 added a customer-review summary; PR #84 documented quality tests. | Traffic Processor implementation, testing, quality evidence, documentation and extensive review activity |
 | **Total** | **22** | **52** | **53** |  |  |  |  |  |
 
-- Embedded screenshots from `reports/week4/images/` for:
+- Screenshots:
 
   ![Milestone](./images/Milestone.jpg)
-  
-  ![Latest protected-default-branch CI run](./images/CI pipeline test run.png)
-    * Branch protection or rules evidence
-    * Coverage or test report
-    * Additional QA check result
-    * SemVer release
-    * Example reviewed issue-linked PR/MR
+  ![Latest protected-default-branch CI run](./images/CI_pipeline_test_run.png)
+  ![Branch protection or rules evidence](./images/Branch_protection.png)
+  ![Coverage or test report](./images/test_report.png)
+  ![Additional QA check result](./images/smoke_test.png)
+  ![SemVer release](./images/Release.png)
+  ![Example reviewed issue-linked PR/MR](./images/reviewed_issue-linked_PR.png)
 
 <!--Include:
 
