@@ -9,7 +9,9 @@
 - [Product backlog](https://github.com/SWP-Team-46/Traffic-Proccessor/issues)
 - [Sprint backlog](https://github.com/orgs/SWP-Team-46/projects/1)
 - [Sprint milestone](https://github.com/SWP-Team-46/Traffic-Proccessor/milestone/2)
-- Sprint Goal, Sprint dates, and short scope summary.
+- 1) Sprint Goal: Unite CN and TP, implement separate counters for incoming/outgoing packets, and improve documentation.
+  2) Sprint Dates: 22/06/2026 – 28/06/2026
+  3) Scope Summary: Combine cn.py and tproc.py into a single script (tproc.py), add separate counters for incoming/outgoing traffic, and produce comprehensive documentation for the release.
 - Total story point in this sprint is **8**
 - TP and CN are now united, TP now counts incoming/outcoming packets, more documentation
 - [Deployed Product](http://147.45.234.218:8080)
@@ -22,15 +24,19 @@
 - [Quality requiremnets tests](/docs/quality-requirements-tests.md)
 - [Testing](/docs/testing.md)
 - [User acceptance tests](/docs/user-acceptance-tests.md)
-- Summary of the quality model used and selected ISO/IEC 25010 sub-characteristics.
+- The project uses the ISO/IEC 25010 quality model, with the following sub‑characteristics selected for the current sprint:
+   Quality Requirement	ISO/IEC 25010 Sub‑characteristic
+   - QR‑001 – Dashboard metric update delay	Time behaviour
+   - QR‑002 – Traffic Processor startup time	Time behaviour
+   - QR‑003 – Traffic Processor throughput capacity	Performance efficiency
 - Testing status summary, including critical modules and per-module line coverage status.
    - Unit Tests: src/test_TP+CN.py
    - Quality Requirement Tests: src/qr_test.py
    - Coverage Report: Generated in CI as coverage-report artifact
-   - CI Test Logs: Available in GitHub Actions workflow runs
+   - CI Test Logs: [Available in GitHub Actions workflow runs](https://github.com/SWP-Team-46/Traffic-Proccessor/actions/runs/28325503855/job/83914700451)
 - [TP unit tests](/src/Traffic_Processor/test_TP+CN.py)
 - Links to integration tests.
-- Links to automated quality requirement tests.
+- Automated quality requirement tests [description](https://github.com/SWP-Team-46/Traffic-Proccessor/blob/main/docs/quality-requirement-tests.md), [code](https://github.com/SWP-Team-46/Traffic-Proccessor/blob/main/src/qr_test.py).
 - [CI pipeline](/.github/workflows/main.yml)
 - [Protected-default-branch CI run](https://github.com/SWP-Team-46/Traffic-Proccessor/actions/runs/28325503855)
 - [Protection](https://github.com/SWP-Team-46/Traffic-Proccessor/settings/rules/17694937) <!--IDK what to put here-->
@@ -39,14 +45,25 @@
 - Link to the SemVer release mapped to the Assignment 4 Sprint increment
 - [CHANGELOG](/CHANGELOG.md)
 - Public sanitized demo video shorter than two minutes.
-- Public sanitized UAT results summary.
+- UAT results summary:
+
+| UAT | Description | Result |
+|-------|--------|-------|
+| UAT‑001 | Verify Web Interface Displays Live Traffic Statistic |	✅ Passed |
+| UAT‑002 | Verify Traffic Processor Operation via Docker | ✅ Passed |
+| UAT‑003 | Verify Directional Traffic Classification | ✅ Passed |
+
+No blocking issues were observed; only minor improvements to UAT‑003 instructions were noted and have been applied
+
 - [Meeting transcript](/reports/week4/customer-review-transcript.md)
 - [Meeting summary](/reports/week4/customer-review-summary.md)
 - [Reflection](/reports/week4/reflection.md)
 - [Retrospective](/reports/week4/retrospective.md)
 - [LLM report](/reports/week4/llm-report.md)
-- Summary of the current product status.
-- Summary of the next steps.
+- The Traffic Processor is now unified with the Communication Node into a single script. It correctly counts incoming and outgoing packets separately and displays these statistics via a web dashboard. The system is containerised with Docker Compose and passes all unit, quality, and user acceptance tests. The current release is v1.1.0
+- Summary of the next steps:
+  - Sprint 3 (29/06/2026 – 5/07/2026): Begin work on additional features (to be defined)
+  - Sprint 4 (6/07/2026 – 12/07/2026): Further enhancements and polish
 - Contribution traceability table mapping each team member to issues, PRs/MRs, review activity, testing, quality, automation, or documentation work.
 - Embedded screenshots from `reports/week4/images/` for:
 
