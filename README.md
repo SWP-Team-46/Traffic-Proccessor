@@ -10,10 +10,13 @@
 
 To run via [docker](https://www.docker.com/):
 
-Run in src folder to start the cnss, remote server that recieves and shows data collected
+Run in src folder to start:
+
+- cnss, remote server that recieves and shows data collected
+- tp, program that scans your network activity and send data to cnss
 
 ```docker compose up --build```
 
-Run in src folder (in the other cmd tab, or on the other device) to start the tp, program that scans your network activity and send data to cnss
+Run in src folder in the other cmd tab to verify that tp is running
 
 ```docker exec tproc cat /data/data.txt | head -3```
