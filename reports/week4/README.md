@@ -69,6 +69,7 @@ No blocking issues were observed; only minor improvements to UAT‑003 instructi
   - Sprint 3 (29/06/2026 – 5/07/2026): Begin work on additional features (to be defined)
   - Sprint 4 (6/07/2026 – 12/07/2026): Further enhancements and polish
 - Contribution traceability table mapping each team member to issues, PRs/MRs, review activity, testing, quality, automation, or documentation work.
+  
 | Team member | Issues authored | PRs authored | PRs reviewed | Testing work | Quality work | Automation / DevOps | Documentation work | Primary contribution areas |
 |---|---:|---:|---:|---|---|---|---|---|
 | `mrZom49` | 12 | 23 | 15 | PR #62 added unit tests; PR #73 created `qr_test.py`; PR #79 added coverage parameters; issues #57 and #65 tracked unit tests and test documentation. | Quality-requirement testing, coverage measurement and issue #24 addressing CN/TP data mismatch. | PR #47 added a Python workflow; PRs #55 and #56 implemented CI/CD; PR #66 added Lychee link checking. | PRs #81, #77 and #53 updated the README; PR #52 updated the changelog; PR #58 added transcript timestamps; PRs #20 and #2 added repository templates. | Backend and CN integration, CI/CD, testing, repository governance and documentation |
@@ -77,6 +78,7 @@ No blocking issues were observed; only minor improvements to UAT‑003 instructi
 | `LimpingCoronation` | 1 | 4 | 1 | Issue #82 and open PR #83 added integration tests. | Integration-test implementation provided direct quality-assurance evidence. | PR #44 contained a DevOps update. | No clearly documentation-specific authored PR was identified. | CNSS/control-status server, DevOps and integration testing |
 | `TimLih-h` | 1 | 10 | 21 | PRs #50 and #54 maintained the testing branch; PR #51 prepared the Traffic Processor for testing; open PR #84 finalized quality-requirement tests. | PR #84 mapped quality tests to issues #41–#43; issue #21 tracked design reworking. | No directly evidenced authored automation PR was identified. | PR #78 completed missing `/docs` and week-report documentation; PR #26 added a customer-review summary; PR #84 documented quality tests. | Traffic Processor implementation, testing, quality evidence, documentation and extensive review activity |
 | **Total** | **22** | **52** | **53** |  |  |  |  |  |
+
 - Embedded screenshots from `reports/week4/images/` for:
 
     * Sprint milestone
