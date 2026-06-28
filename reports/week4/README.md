@@ -20,7 +20,7 @@
 - All the provided feedback was addressed
 - [Roadmap](/docs/roadmap.md)
 - [Definition of done](/docs/definition-of-done.md)
-- [Quality requirements](/docs/quality-requirements.md)
+- [Quality requirements description](/docs/quality-requirements.md)
 - [Quality requirements tests](/docs/quality-requirements-tests.md)
 - [Testing](/docs/testing.md)
 - [User acceptance tests](/docs/user-acceptance-tests.md)
