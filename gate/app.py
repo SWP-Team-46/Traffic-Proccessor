@@ -47,16 +47,26 @@ def proxy_request(target_server):
     return Response(response.content, response.status_code, headers)
 
 
-@app.route("/", defaults={"path": ""}, methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-@app.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+@app.route("/", defaults={"path": ""}, methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+@app.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
 def gate(path):
     client_ip = request.remote_addr
 
     print(f"[GATE] IP = {client_ip}", flush=True)
+    print(f"[GATE] PATH = {request.path}", flush=True)
 
     if client_ip in BLOCKED_IPS:
         print(f"[GATE] DENY {client_ip}", flush=True)
-        return proxy_request(ERROR_SERVER)
+        return Response(
+            f"""
+            <h1>Access denied</h1>
+            <p>Your IP is blocked or suspicious.</p>
+            <p>Your IP: {client_ip}</p>
+            <p>Path: {request.path}</p>
+            """,
+            status=403,
+            content_type="text/html"
+        )
 
     print(f"[GATE] ALLOW {client_ip}", flush=True)
     return proxy_request(MAIN_SERVER)
