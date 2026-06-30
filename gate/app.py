@@ -14,18 +14,27 @@ BLOCKED_IPS = {
 }
 
 
-def get_client_ip():
+def get_client_ips():
     """
-    Get client IP address.
-    request.remote_addr is the direct client IP.
-    X-Forwarded-For need for if there is another proxy before this gate
+    Get all possible client IPs.
+    X-Forwarded-For may contain the original client IP if there is a proxy.
+    We check both to avoid missing blocked clients.
     """
+    ips = []
+
+    if request.remote_addr:
+        ips.append(request.remote_addr)
+
     forwarded_for = request.headers.get("X-Forwarded-For")
-
     if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
+        forwarded_ips = [
+            ip.strip()
+            for ip in forwarded_for.split(",")
+            if ip.strip()
+        ]
+        ips.extend(forwarded_ips)
 
-    return request.remote_addr
+    return ips
 
 
 def proxy_request(target_server):
@@ -72,17 +81,23 @@ def proxy_request(target_server):
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 @app.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 def gate(path):
-    client_ip = get_client_ip()
+    client_ips = get_client_ips()
 
-    print(f"[GATE] Request from IP: {client_ip}")
+    print(f"[GATE] Request IPs: {client_ips}", flush=True)
 
-    if client_ip in BLOCKED_IPS:
-        print(f"[GATE] DENY {client_ip} -> error-server")
+    blocked_ip = None
+
+    for ip in client_ips:
+        if ip in BLOCKED_IPS:
+            blocked_ip = ip
+            break
+
+    if blocked_ip:
+        print(f"[GATE] DENY {blocked_ip} -> error-server", flush=True)
         return proxy_request(ERROR_SERVER)
 
-    print(f"[GATE] ALLOW {client_ip} -> cnss")
+    print(f"[GATE] ALLOW {client_ips} -> cnss", flush=True)
     return proxy_request(MAIN_SERVER)
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
