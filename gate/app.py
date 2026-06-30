@@ -6,9 +6,6 @@ app = Flask(__name__)
 MAIN_SERVER = "http://cnss:8080"
 ERROR_SERVER = "http://error-server:5000"
 
-# Test blocked IPs.
-# 172.19.0.1 — request from inside Ubuntu/Docker host
-# 10.241.1.122 — request from Windows browser
 BLOCKED_IPS = {
     "172.19.0.1",
     "10.241.1.122"
@@ -55,14 +52,14 @@ def proxy_request(target_server):
 def gate(path):
     client_ip = request.remote_addr
 
-    print(f"[GATE] request.remote_addr = {client_ip}", flush=True)
-    print(f"[GATE] BLOCKED_IPS = {BLOCKED_IPS}", flush=True)
+    print(f"[GATE] IP = {client_ip}", flush=True)
+    print(f"[GATE] BLOCKED = {BLOCKED_IPS}", flush=True)
 
     if client_ip in BLOCKED_IPS:
-        print(f"[GATE] DENY {client_ip} -> error-server", flush=True)
+        print(f"[GATE] DENY {client_ip}", flush=True)
         return proxy_request(ERROR_SERVER)
 
-    print(f"[GATE] ALLOW {client_ip} -> cnss", flush=True)
+    print(f"[GATE] ALLOW {client_ip}", flush=True)
     return proxy_request(MAIN_SERVER)
 
 
