@@ -53,14 +53,9 @@ def gate(path):
     client_ip = request.remote_addr
 
     print(f"[GATE] IP = {client_ip}", flush=True)
-    print(f"[GATE] BLOCKED = {BLOCKED_IPS}", flush=True)
+    print("[GATE] TEST MODE: DENY ALL", flush=True)
 
-    if client_ip in BLOCKED_IPS:
-        print(f"[GATE] DENY {client_ip}", flush=True)
-        return proxy_request(ERROR_SERVER)
-
-    print(f"[GATE] ALLOW {client_ip}", flush=True)
-    return proxy_request(MAIN_SERVER)
+    return proxy_request(ERROR_SERVER)
 
 
 if __name__ == "__main__":
