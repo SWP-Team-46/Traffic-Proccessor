@@ -8,7 +8,7 @@
 
 1. [Product Backlog board](https://github.com/SWP-Team-46/Traffic-Proccessor/issues)
 2. [Sprint Backlog board](https://github.com/orgs/SWP-Team-46/projects/3)
-3. [Sprint 5 milestone](https://github.com/SWP-Team-46/Traffic-Proccessor/milestone/3)
+3. [Sprint 3 milestone](https://github.com/SWP-Team-46/Traffic-Proccessor/milestone/3)
 4. Sprint Goal, Sprint dates, and short scope summary.
 5. Total Sprint size in Story Points.
 6. Summary of delivered `MVP v2` changes.
@@ -29,8 +29,8 @@
 21. Summary of the architecture and how it supports the current product
 22. Short explanation of how quality requirements are linked to the architecture decisions
 23. Testing and CI status summary for the delivered increment
-24. Link to the CI pipeline
-25. Link to the latest protected-default-branch CI run
+24. [CI pipeline](/.github/workflows/main.yml)
+25. [latest protected-default-branch CI run](https://github.com/SWP-Team-46/Traffic-Proccessor/actions) <!--Finish the link-->
 26. Link to the SemVer release mapped to `MVP v2`
 27. [Changelog](/CHANGELOG.md)
 28. Public sanitized demo video shorter than two minutes
