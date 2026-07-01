@@ -7,7 +7,7 @@ services:
   # --------------------------------------------------------
   gate:
     build:
-      context: ../gate
+      context: ./gate
       dockerfile: Dockerfile
     container_name: gate
     ports:
@@ -23,7 +23,7 @@ services:
   # --------------------------------------------------------
   error-server:
     build:
-      context: ../error_server
+      context: ./error_server
       dockerfile: Dockerfile
     container_name: error_server
     expose:
