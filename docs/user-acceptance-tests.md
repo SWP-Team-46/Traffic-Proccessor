@@ -66,8 +66,21 @@ User acceptance tests (UATs) describe end-user-facing scenarios that customers o
 | **Customer Comments or Observed Issues** | - Sprint 3: No observed issues|
 | **Resulting PBIs or Issues** | - Sprint 3: No new PBIs|
 
+---
 
+## UAT-005: Verify Historical Traffic Data is Stored in the Database
 
+| Field | Detail |
+|-------|--------|
+| **ID** | UAT-005 |
+| **Status** | Active |
+| **User Goal** | As a network administrator, I want traffic statistics to be persistently stored in the database so that I can review historical data and identify trends over time. |
+| **Preconditions** | 1. All Docker services are running (as per UAT-002).<br>2. The PostgreSQL database is accessible from the host or via `docker exec`.<br>3. `psql` command-line tool is available (or use `docker exec -it postgres psql`). |
+| **Step-by-step Instructions** | 1. Ensure services are running: `docker compose up -d`<br>2. Generate some network traffic to ensure data is captured (e.g., `ping -c 5 8.8.8.8`).<br>3. Wait a few seconds for the data to be written to the database.<br>4. Connect to the PostgreSQL database:<br>&nbsp;&nbsp;&nbsp;`docker exec -it postgres psql -U <username> -d <database_name>`<br>&nbsp;&nbsp;&nbsp;Replace `<username>` and `<database_name>` with values from `docker-compose.yml`<br>5. Query the traffic statistics table:<br>&nbsp;&nbsp;&nbsp;`SELECT * FROM traffic_stats ORDER BY timestamp DESC LIMIT 10;`<br>6. Verify that the query returns rows with recent timestamps and packet/byte counts.<br>7. Exit psql: `\q` |
+| **Expected Outcome** | - The database connection is successful.<br>- The query returns at least one row of data.<br>- The returned data includes a timestamp, incoming/outgoing packet counts, and byte counts that are consistent with the traffic generated.<br>- The timestamp is recent (within the last minute). |
+| **Assignment-specific Execution Results** | - Sprint 3: All criteria passed|
+| **Customer Comments or Observed Issues** | - Sprint 3: No observed issues|
+| **Resulting PBIs or Issues** | - Sprint 3: No new PBIs|
 
 
 
