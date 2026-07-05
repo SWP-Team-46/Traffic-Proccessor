@@ -47,7 +47,7 @@
 39. Embedded screenshots from `reports/week5/images/` for:
 
      ![Sprint milestone](/reports/week5/images/milestone.png)
-     ![Board or project workflow view](/reports/week5/images/)
+     ![Board or project workflow view](/reports/week5/images/project_backboard.png)
      ![Latest protected-default-branch CI run](/reports/week5/images/)
      ![SemVer release](/reports/week5/images/)
      ![Example reviewed issue-linked PR or MR](/reports/week5/images/reviewed_issue-linked_PR.png)
