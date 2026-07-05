@@ -48,7 +48,7 @@
 
      ![Sprint milestone](/reports/week5/images/milestone.png)
      ![Board or project workflow view](/reports/week5/images/project_backboard.png)
-     ![Latest protected-default-branch CI run](/reports/week5/images/)
+     ![Latest protected-default-branch CI run](/reports/week5/images/Ci_run.png)
      ![SemVer release](/reports/week5/images/)
      ![Example reviewed issue-linked PR or MR](/reports/week5/images/reviewed_issue-linked_PR.png)
      ![Hosted docs site](/reports/week5/images/)
