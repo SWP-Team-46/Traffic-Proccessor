@@ -1,5 +1,7 @@
 @startuml
-title Sequence Diagram – Live Traffic & Access Flow 
+' Dynamic View – Live Traffic & Access Flow
+
+title Sequence Diagram – Live Traffic & Access Flow
 
 actor "End User" as user
 participant "Gate" as gate
@@ -10,7 +12,6 @@ participant "PostgreSQL" as db
 participant "TProc" as tp
 participant "Network Interface" as net
 
-== Packet Capture and Processing ==
 net -> tp: Live packets
 activate tp
 tp -> tp: Sniff packet (Scapy)
@@ -19,7 +20,6 @@ tp -> tp: Determine direction (in/out)
 tp -> tp: Update IPTracker (per-IP stats)
 deactivate tp
 
-== Statistics Transmission ==
 loop Every delay seconds (default 0.5s)
     tp -> tp: Build statistics batch (JSON)
     tp -> api: HTTP POST /load
@@ -33,7 +33,6 @@ loop Every delay seconds (default 0.5s)
     deactivate api
 end
 
-== Dashboard Refresh ==
 user -> api: GET /packets
 activate api
 api -> db: Retrieve latest stats
@@ -43,7 +42,6 @@ deactivate db
 api --> user: JSON response
 deactivate api
 
-== Protected Access via Gate ==
 user -> gate: HTTP request to protected target
 activate gate
 gate -> gate: Check client IP against BLOCKED_IPS
@@ -62,4 +60,5 @@ else IP is blocked
     gate --> user: Access denied page
 end
 deactivate gate
+
 @enduml
