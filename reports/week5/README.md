@@ -14,7 +14,7 @@
 6. Add traffic gate, added per-IP data to be displayed, UI changes, backend changes
 7. Link to the relevant [product access artifact](http://147.45.234.218:8080)
 8. [Run instructions](/README.md)
-9. Customer feedback response table with feedback points and resulting PBIs or issues.
+9. Customer feedback response table with feedback points and resulting PBIs or issues - not done
 10. All the provided feedback was addressed
 11. [Roadmap](/docs/roadmap.md)
 12. [Definition of done](/docs/definition-of-done.md)
@@ -33,9 +33,9 @@
 25. [latest protected-default-branch CI run](https://github.com/SWP-Team-46/Traffic-Proccessor/actions) <!--Finish the link-->
 26. [MVP v2 release](https://github.com/SWP-Team-46/Traffic-Proccessor/releases/tag/2.0.0)
 27. [Changelog](/CHANGELOG.md)
-28. Public sanitized demo video shorter than two minutes
-29. Public sanitized UAT results summary
-30. Link to the hosted documentation site
+28. Public sanitized demo video shorter than two minutes - not done
+29. All four UAT tests (UAT-001, UAT-002, UAT-003, and UAT-004) executed during Sprint 2 passed successfully, covering live traffic statistics, Docker Compose operation, directional packet classification, and the additional validation introduced in the assignment-5 branch, the customer reported no critical issues
+30. Link to the hosted documentation site - not done
 31. [Sprint Review transcript](/reports/week5/sprint-review-transcript.md)
 32. [Sprint review summary](reports/week5/sprint-review-summary.md)
 33. [Reflection](reports/week5/reflection.md)
@@ -51,5 +51,5 @@
      ![Latest protected-default-branch CI run](/reports/week5/images/CI_run.png)
      ![SemVer release](/reports/week5/images/release.png)
      ![Example reviewed issue-linked PR or MR](/reports/week5/images/reviewed_issue-linked_PR.png)
-     ![Hosted docs site](/reports/week5/images/)
+     ![Hosted docs site](/reports/week5/images/) - not done
 
