@@ -4,6 +4,7 @@ import json
 from urllib import error
 from datetime import datetime
 import netifaces
+import socket
 from scapy.all import IP, TCP, UDP, ICMP, Ether
 
 from tproc import TrafficProcessor
