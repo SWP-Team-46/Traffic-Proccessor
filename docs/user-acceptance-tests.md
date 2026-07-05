@@ -68,19 +68,26 @@ User acceptance tests (UATs) describe end-user-facing scenarios that customers o
 
 ---
 
-## UAT-005: Verify Historical Traffic Data is Stored in the Database
+Based on the current state of the `dev` branch, the previously suggested UAT-005 (historical data persistence) is not applicable, as the database is not yet used to store packet or connection history. A more relevant test focuses on a feature that is actually implemented and distinct from the existing four UATs.
+
+The **reset** functionality in the CNSS service allows administrators to set a baseline for traffic statistics, enabling them to measure traffic from a specific point in time. This is a simple, testable feature that is different from the web interface, Docker operation, directional classification, and gate filtering tests already defined.
+
+---
+
+## UAT-005: Verify Traffic Statistics Reset Functionality
 
 | Field | Detail |
 |-------|--------|
 | **ID** | UAT-005 |
 | **Status** | Active |
-| **User Goal** | As a network administrator, I want traffic statistics to be persistently stored in the database so that I can review historical data and identify trends over time. |
-| **Preconditions** | 1. All Docker services are running (as per UAT-002).<br>2. The PostgreSQL database is accessible from the host or via `docker exec`.<br>3. `psql` command-line tool is available (or use `docker exec -it postgres psql`). |
-| **Step-by-step Instructions** | 1. Ensure services are running: `docker compose up -d`<br>2. Generate some network traffic to ensure data is captured (e.g., `ping -c 5 8.8.8.8`).<br>3. Wait a few seconds for the data to be written to the database.<br>4. Connect to the PostgreSQL database:<br>&nbsp;&nbsp;&nbsp;`docker exec -it postgres psql -U <username> -d <database_name>`<br>&nbsp;&nbsp;&nbsp;Replace `<username>` and `<database_name>` with values from `docker-compose.yml`<br>5. Query the traffic statistics table:<br>&nbsp;&nbsp;&nbsp;`SELECT * FROM traffic_stats ORDER BY timestamp DESC LIMIT 10;`<br>6. Verify that the query returns rows with recent timestamps and packet/byte counts.<br>7. Exit psql: `\q` |
-| **Expected Outcome** | - The database connection is successful.<br>- The query returns at least one row of data.<br>- The returned data includes a timestamp, incoming/outgoing packet counts, and byte counts that are consistent with the traffic generated.<br>- The timestamp is recent (within the last minute). |
+| **User Goal** | As a network administrator, I want to reset the traffic statistics baseline so that I can measure network activity from a specific point in time without restarting the entire system. |
+| **Preconditions** | 1. All Docker services are running (as per UAT-002).<br>2. The CNSS service is accessible at `http://localhost:8080`.<br>3. `curl` or a similar HTTP client is available on the host. |
+| **Step-by-step Instructions** | 1. Ensure services are running: `docker compose up -d`<br>2. Generate some initial traffic to populate statistics (e.g., `curl http://localhost:8080`).<br> 3.Record the `incoming_packets` and `outgoing_packets` values.<br>4. Reset the statistics baseline through the website <br>5. Record the values <br>6. Generate additional traffic (e.g., `curl http://localhost:8080`).<br>7. Observe the changes. |
+| **Expected Outcome** | - Immediately after reset, the packet counts are **reduced to zero** .<br>- After generating new traffic, the counts increase from zero, reflecting only the traffic sent after the reset. |
 | **Assignment-specific Execution Results** | - Sprint 3: All criteria passed|
 | **Customer Comments or Observed Issues** | - Sprint 3: No observed issues|
 | **Resulting PBIs or Issues** | - Sprint 3: No new PBIs|
+
 
 
 
