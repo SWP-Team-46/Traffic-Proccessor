@@ -1,38 +1,74 @@
-@startuml
-!include <C4/C4_Deployment>
+@startuml Deployment Diagram
+!theme plain
 
-title Deployment Diagram – Traffic Processor
+skinparam node {
+  BackgroundColor WhiteSmoke
+  BorderColor DarkBlue
+  ArrowColor #444444
+}
 
-Deployment_Node(docker_host, "Docker Host", "Linux/Windows/macOS") {
-    Deployment_Node(compose, "Docker Compose", "Orchestrates 6 containers") {
-        Container(tproc, "tproc", "Docker", "Traffic Processor – packet capture")
-        Container(gate, "gate", "Docker", "Reverse proxy with IP filtering")
-        Container(mock_target, "mock_target", "Docker", "Protected application")
-        Container(error_server, "error_server", "Docker", "Error page for blocked IPs")
-        Container(cnss, "cnss", "Docker", "Control & Status Server – FastAPI")
-        Container(db, "postgres", "PostgreSQL 14.8", "Persistent storage")
+skinparam component {
+  BackgroundColor White
+  BorderColor Black
+}
+
+skinparam cloud {
+  BackgroundColor LightCyan
+  BorderColor DarkCyan
+}
+
+skinparam database {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title Traffic Processor System – Deployment Diagram (Physical View)
+
+' --- Client Tier ---
+node "End User Device" <<device>> as UserDevice {
+  component [Web Browser] as browser
+}
+
+' --- External Network ---
+cloud "External Network" {
+  component [Live Traffic Source] as network
+}
+
+' --- Docker Host (Local / Cloud VM) ---
+node "Docker Host" <<server>> as DockerHost {
+
+  node "Docker Compose" <<execution environment>> as Compose {
+
+    ' Shared network namespace (TProc shares Gate's network)
+    node "Gate Network Namespace" <<execution environment>> as GateNet {
+      component [Gate\n(Reverse Proxy)] as gate
+      component [TProc\n(Packet Sniffer)] as tproc
     }
+
+    component [Mock Target\n(Protected App)] as mock_target
+    component [Error Server\n(403 Page)] as error_server
+
+    node "Control & Status" <<execution environment>> {
+      component [CNSS\n(FastAPI)] as cnss
+    }
+
+    database [PostgreSQL 14.8] as postgres
+  }
 }
 
-Deployment_Node(network, "Network", "External") {
-    System_Ext(net_iface, "Network Interface", "Live traffic source")
-}
+' --- Relationships (External → Internal) ---
+network --> tproc : Raw Socket (NET_ADMIN)
+tproc --> cnss : HTTP POST /load (port 8080)
 
-Deployment_Node(user_node, "End User Device", "Browser") {
-    System_Ext(end_user, "End User", "Accesses dashboard & protected target")
-}
+' --- Client Access ---
+browser --> gate : HTTP (port 8000)\n(protected target)
+browser --> cnss : HTTP (port 8080)\n(dashboard)
 
-' Network connections
-Rel(net_iface, tproc, "Captures packets from", "Raw socket (NET_ADMIN)")
-Rel(tproc, cnss, "Sends stats via", "HTTP POST (port 8080)")
-Rel(cnss, db, "Persists via", "SQL (port 5432)")
+' --- Internal Routing (Gate) ---
+gate --> mock_target : HTTP (internal)\n(if IP allowed)
+gate --> error_server : HTTP (internal)\n(if IP blocked)
 
-' User-facing connections
-Rel(end_user, gate, "Accesses protected target", "HTTP (port 8000)")
-Rel(end_user, cnss, "Accesses dashboard", "HTTP (port 8080)")
-
-' Internal connections
-Rel(gate, mock_target, "Proxies allowed requests", "HTTP (port 5000)")
-Rel(gate, error_server, "Forwards blocked requests", "HTTP (port 5000)")
+' --- Persistence ---
+cnss --> postgres : SQL (port 5432)
 
 @enduml
