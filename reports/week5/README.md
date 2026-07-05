@@ -44,10 +44,10 @@
 29. All four UAT tests (UAT-001, UAT-002, UAT-003, and UAT-004) executed during Sprint 2 passed successfully, covering live traffic statistics, Docker Compose operation, directional packet classification, and the additional validation introduced in the assignment-5 branch, the customer reported no critical issues
 30. [Documentation site](https://github.com/SWP-Team-46/Traffic-Proccessor/tree/main/docs)
 31. [Sprint Review transcript](/reports/week5/sprint-review-transcript.md)
-32. [Sprint review summary](reports/week5/sprint-review-summary.md)
-33. [Reflection](reports/week5/reflection.md)
-34. [Retrospective](reports/week5/retrospective.md)
-35. [LLM report](reports/week5/llm-report.md)
+32. [Sprint review summary](/reports/week5/sprint-review-summary.md)
+33. [Reflection](/reports/week5/reflection.md)
+34. [Retrospective](/reports/week5/retrospective.md)
+35. [LLM report](/reports/week5/llm-report.md)
 36. The main branch delivers a working Traffic Processor with packet capture, CNSS dashboard, blocking, tunneling, and separate in/out counters
 37. Polishing, stresstesting, improving throughtput, add more statistics and ability to export them
 38. Contribution traceability table mapping each team member to issues, PRs or MRs, review activity, testing, quality, automation, architecture, or documentation work
