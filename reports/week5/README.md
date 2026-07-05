@@ -37,10 +37,10 @@
 22. Asynchronous HTTP and in‑memory storage (ADR‑001/002) ensure sub‑second dashboard updates; Scapy (ADR‑003) keeps startup fast and throughput adequate
 23. CI runs linting, unit/integration tests, coverage (≥30% threshold), Docker build, and a smoke test; the latest run passed
 24. [CI pipeline](/.github/workflows/main.yml)
-25. [latest protected-default-branch CI run](https://github.com/SWP-Team-46/Traffic-Proccessor/actions) <!--Finish the link-->
+25. [latest protected-default-branch CI run](https://github.com/SWP-Team-46/Traffic-Proccessor/actions/runs/28747831220) <!--Finish the link-->
 26. [MVP v2 release](https://github.com/SWP-Team-46/Traffic-Proccessor/releases/tag/2.0.0)
 27. [Changelog](/CHANGELOG.md)
-28. Public sanitized demo video shorter than two minutes - not done
+28. [Demo video](https://drive.google.com/file/d/1-tEdvJcMn8H3doVFpN6HA3WVpmTIUP-m/view?usp=sharing)
 29. All four UAT tests (UAT-001, UAT-002, UAT-003, and UAT-004) executed during Sprint 2 passed successfully, covering live traffic statistics, Docker Compose operation, directional packet classification, and the additional validation introduced in the assignment-5 branch, the customer reported no critical issues
 30. [Documentation site](https://github.com/SWP-Team-46/Traffic-Proccessor/tree/main/docs)
 31. [Sprint Review transcript](/reports/week5/sprint-review-transcript.md)
