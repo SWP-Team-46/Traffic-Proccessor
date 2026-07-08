@@ -3,14 +3,12 @@ version: "2.4"
 services:
 
   # --------------------------------------------------------
-  # 1. TProc - Packet caprute (shares gate's network)
+  # 1. TProc - Packet caprute
   # --------------------------------------------------------
   tproc:
     build:
       context: ./Traffic_Processor
-      dockerfile: Dockerfile.tproc
     container_name: tproc
-    network_mode: "service:gate"
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -21,53 +19,11 @@ services:
     command: >
       python tproc.py -i eth0 --url http://cnss:8080/load
     depends_on:
-      - gate
+      - cnss
     restart: unless-stopped
 
   # --------------------------------------------------------
-  # 2. Gate — Reverse Proxy with IP Filtering
-  # --------------------------------------------------------
-  gate:
-    build:
-      context: ./gate
-      dockerfile: Dockerfile
-    container_name: gate
-    ports:
-      - "8000:8080"
-    networks:
-      - swp-net
-    restart: unless-stopped
-
-  # --------------------------------------------------------
-  # 3. Mock Target — Protected app
-  # --------------------------------------------------------
-  mock_target:
-    build:
-      context: ./mock_target
-      dockerfile: Dockerfile
-    container_name: mock_target
-    expose:
-      - "5000"                 # Internal only — NO public ports!
-    networks:
-      - swp-net
-    restart: unless-stopped
-
-  # --------------------------------------------------------
-  # 4. ERROR Server — Page for Blocked IPs
-  # --------------------------------------------------------
-  error-server:
-    build:
-      context: ./error_server
-      dockerfile: Dockerfile
-    container_name: error_server
-    expose:
-      - "5000"
-    networks:
-      - swp-net
-    restart: unless-stopped
-
-  # --------------------------------------------------------
-  # 5. CNSS — Control & Status Server
+  # 2. CNSS — Control & Status Server
   # --------------------------------------------------------
   cnss:
     build:
@@ -96,7 +52,7 @@ services:
     restart: unless-stopped
 
   # --------------------------------------------------------
-  # 6. PostgreSQL
+  # 3. PostgreSQL
   # --------------------------------------------------------
   postgres:
     image: postgres:14.8-alpine3.18
@@ -113,6 +69,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
+    networks:
+      - swp-net
+    restart: unless-stopped
+
+  # --------------------------------------------------------
+  # X. Mock Target — Observed app
+  # --------------------------------------------------------
+  mock_target:
+    build:
+      context: ./mock_target
+      dockerfile: Dockerfile
+    container_name: mock_target
+    expose:
+      - "5000"                 # Internal only — NO public ports!
     networks:
       - swp-net
     restart: unless-stopped
