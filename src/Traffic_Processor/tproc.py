@@ -41,7 +41,7 @@ class IPTracker:
                 "protocols": defaultdict(int),
                 "ports": defaultdict(int),
                 "last_seen": now,
-                "timeline": [],  # (timestamp, count)
+                "timeline": []  # (timestamp, count)
             }
         entry = self.data[ip]
         entry["total_packets"] += 1
@@ -113,12 +113,13 @@ class IPTracker:
             return result
 
 
+
 class TrafficProcessor:
     def __init__(self, interface=None, output_url=None, delay=None):
         # Read from environment if not provided explicitly
         self.interface = interface or os.environ.get("INTERFACE", "eth0")
         self.output_url = output_url or os.environ.get("CNSS_URL", "http://cnss:8080/load")
-        self.delay = float(delay or os.environ.get("DELAY", "0.5"))
+        self.delay = float(delay or os.environ.get("DELAY", "1"))
 
         # Global counters
         self.packet_cnt = 0
@@ -346,7 +347,7 @@ def main():
     parser.add_argument(
         "-u", "--url",
         type=str,
-        help="HTTP endpoint URL to POST batches to (default: http://cnss:8080/load, or CNSS_URL env)"
+        help="HTTP endpoint URL to POST batches to (default: http://cnss:38080/load, or CNSS_URL env)"
     )
     parser.add_argument(
         "-d", "--delay",

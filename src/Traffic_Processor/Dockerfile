@@ -17,6 +17,3 @@ COPY tproc.py .
 
 # Use ENTRYPOINT so that command-line arguments can be passed
 ENTRYPOINT ["python", "tproc.py"]
-
-# Default command (can be overridden)
-CMD ["-i", "eth0"]

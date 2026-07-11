@@ -22,7 +22,6 @@ attach:
 	docker run --rm \
 		--network container:$(APP) \
 		-e CNSS_URL=http://cnss:38080/load \
-		-e INTERFACE=eth0 \
 		--name tp-$(APP) \
 		traffic-processor:latest
 
@@ -31,7 +30,6 @@ attach-cnss:
 	docker run --rm \
 		--network src_swp-net \
 		-e CNSS_URL=http://cnss:38080/load \
-		-e INTERFACE=eth0 \
 		--name tp-cnss \
 		traffic-processor:latest
 
