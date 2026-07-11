@@ -3,7 +3,7 @@ version: "2.4"
 services:
 
   # --------------------------------------------------------
-  # 1. TProc - Packet capture
+  # 1. TProc - Packet caprute
   # --------------------------------------------------------
   tproc:
     build:
@@ -12,15 +12,16 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    volumes:
+      - shared_data:/data
     environment:
-      - TARGET_HOSTNAME=iperf3-server
       - PYTHONUNBUFFERED=1
     command: >
       python tproc.py -i eth0 --url http://cnss:8080/load
+    networks:
+      - swp-net
     depends_on:
       - cnss
-      - iperf3-server
-    network_mode: "service:iperf3-server"
     restart: unless-stopped
 
   # --------------------------------------------------------
@@ -39,7 +40,7 @@ services:
       - DB_NAME=postgresdb
       - DB_USER=postgres_user
       - DB_PASSWORD=password123
-      - DB_HOST=postgres          # Now resolved by the new 'postgres' service
+      - DB_HOST=postgres
       - DB_PORT=5432
       - DEV_MODE=true
     command: >
@@ -47,56 +48,54 @@ services:
              poetry run uvicorn app.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       postgres:
-        condition: service_healthy   # Wait for DB to be ready
+        condition: service_healthy
     networks:
       - swp-net
     restart: unless-stopped
 
   # --------------------------------------------------------
-  # 3. PostgreSQL for CNSS (new)
+  # 3. PostgreSQL
   # --------------------------------------------------------
   postgres:
-    image: postgres:15-alpine
+    image: postgres:14.8-alpine3.18
+    container_name: postgres_swp
     environment:
-      POSTGRES_USER: postgres_user
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: postgresdb
+      POSTGRES_DB: "postgresdb"
+      POSTGRES_USER: "postgres_user"
+      POSTGRES_PASSWORD: "password123"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres_user -d postgresdb"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
     networks:
       - swp-net
     restart: unless-stopped
 
-  # ---------- 4. iperf3 – Traffic Generator (Server Mode) ----------
-  iperf3-server:
-    image: networkstatic/iperf3:latest
-    container_name: iperf3-server
-    command: -s -p 5201
-    ports:
-      - "5201:5201"   # Expose iperf3 port to host (optional)
+  # --------------------------------------------------------
+  # X. Mock Target — Observed app
+  # --------------------------------------------------------
+  mock_target:
+    build:
+      context: ./mock_target
+      dockerfile: Dockerfile
+    container_name: mock_target
+    expose:
+      - "5000"               
     networks:
       - swp-net
     restart: unless-stopped
 
-  # ---------- 5. iperf3 – Traffic Generator (Client Mode) ----------
-  iperf3-client:
-    image: networkstatic/iperf3:latest
-    container_name: iperf3-client
-    command: -c iperf3-server -p 5201 -u -b 20M -i 1 -t 60
-    depends_on:
-      - iperf3-server
-    networks:
-      - swp-net
-    restart: "no"   # Run once and exit
-
-  
-
-volumes:   
-  postgres-data: 
 networks:
-  swp-net: {}
+  swp-net:
+    driver: bridge
+    name: swp-net
+
+volumes:
+  shared_data:
+    driver: local
+  postgres_data:
+    driver: local

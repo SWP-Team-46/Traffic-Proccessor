@@ -134,7 +134,7 @@ class IPTracker:
 
 
 class TrafficProcessor:
-    def __init__(self, interface="eth0", output_url="http://cnss:8080", delay=0.5):
+    def __init__(self, interface="eth0", output_url="http://cnss:8080", delay=1): 
         self.interface = interface
         self.output_url = output_url
         self.delay = delay
@@ -196,21 +196,6 @@ class TrafficProcessor:
             if packet.haslayer(IP):
                 src_ip = packet[IP].src
                 dst_ip = packet[IP].dst
-                # If the DESTINATION is the gate:
-                # We only ignore it if it's on a management port (DNS, CNSS API).
-     
-                is_management = False
-                if self.cnss_ip and (src_ip == self.cnss_ip or dst_ip == self.cnss_ip):
-                    return
-                if packet.haslayer(TCP):
-                    # (SSH=22, DNS=53, CNSS=8080)
-                   if packet[TCP].dport in {53, 8000} or packet[TCP].sport in {53, 8000}:
-                        is_management = True
-                elif packet.haslayer(UDP):
-                    if packet[UDP].dport in {53} or packet[UDP].sport in {53}:
-                        is_management = True
-                if is_management:
-                   return
 
             # --- UPDATE GLOBAL COUNTERS ---
             self.packet_cnt += 1
@@ -305,7 +290,7 @@ class TrafficProcessor:
             method="POST"
         )
         try:
-            with request.urlopen(req, timeout=0.5) as resp:
+            with request.urlopen(req, timeout=1) as resp:
                 body = resp.read().decode("utf-8", errors="replace")
                 return resp.getcode(), body
         except error.HTTPError as he:
@@ -361,7 +346,18 @@ class TrafficProcessor:
         print("[TP] Press Ctrl+C to stop")
 
         try:
-            sniff(iface=self.interface, prn=self.packet_handler, store=False)
+            bpf_filter = None
+            if self.target_ip:
+                # Capture ONLY traffic to/from the target container
+                bpf_filter = f"host {self.target_ip}"
+                print(f"[TP] Using BPF filter: {bpf_filter}")
+            else:
+                # Fallback: if target IP isn't resolved, at least drop common network noise
+                bpf_filter = "not arp and not port 53 and not port 5353 and not port 8080"
+                print(f"[TP] Warning: target IP unknown. Using generic noise filter: {bpf_filter}")
+
+            # Pass the filter to sniff
+            sniff(iface=self.interface, prn=self.packet_handler, store=False, filter=bpf_filter)  
         except KeyboardInterrupt:
             print("\n[TP] Stopping...")
         finally:
