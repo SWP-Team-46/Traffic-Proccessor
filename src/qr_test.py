@@ -7,9 +7,12 @@ from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from Traffic_Processor.tproc import TrafficProcessor
 
+
 # QRT-001: Dashboard metric update delay
 def test_dashboard_metric_update_delay():
-    # QRT-001: Verify that dashboard metrics update within ≤1000ms.
+    """
+    QRT-001: Verify that dashboard metrics update within ≤1000ms.
+    """
     # Setup: Create a mock dashboard server that records update timestamps
     class DashboardHandler(BaseHTTPRequestHandler):
         updates = []
@@ -56,19 +59,16 @@ def test_dashboard_metric_update_delay():
     # Expected: ≤1000ms for 95% of runs
     assert delay_ms <= 1000.0, f"Update delay was {delay_ms:.2f}ms, expected ≤1000ms"
 
+
 # QRT-002: Traffic Processor startup time
 def test_traffic_processor_startup_time():
     """
     QRT-002: Verify that the service starts and becomes ready within ≤500ms.
-    Linked quality requirement: QR-002
     """
-    # In a real CI environment, you would start the service via Docker or systemd.
-    # Here we simulate by starting the process and measuring health check time.
-
     start_time = time.time()
 
-    # Simulate service startup by running a subprocess (e.g., python tproc.py)
-    # In practice, you might use docker-compose or a similar command.
+    # Simulate service startup by running a subprocess.
+    # In a real CI environment, you would start the service via Docker or systemd.
     proc = subprocess.Popen(
         ["python", "-c", "import time; time.sleep(0.2); print('ready')"],
         stdout=subprocess.PIPE,
@@ -76,17 +76,14 @@ def test_traffic_processor_startup_time():
         text=True
     )
 
-    # Wait for the process to indicate it's ready (e.g., by printing "ready")
-    # In a real service, you would poll a health check endpoint (e.g., /health)
-    # using requests.get() until it returns 200 OK.
+    # Wait for the process to indicate it's ready
     ready = False
     for _ in range(50):  # Poll up to 5 seconds
         if proc.poll() is not None:
-            # Process exited; check if it printed "ready"
             stdout, _ = proc.communicate()
             if "ready" in stdout:
                 ready = True
-            break
+                break
         time.sleep(0.1)
 
     elapsed_ms = (time.time() - start_time) * 1000
@@ -100,18 +97,18 @@ def test_traffic_processor_startup_time():
     # Expected: ≤500ms
     assert elapsed_ms <= 500.0, f"Startup time was {elapsed_ms:.2f}ms, expected ≤500ms"
 
+
 # QRT-003: Traffic Processor throughput capacity
 def test_traffic_processor_throughput():
     """
     QRT-003: Verify that the processor sustains ≥1000 Kbps for at least 5 seconds.
-    Linked quality requirement: QR-003
     """
     import time
     from scapy.all import Ether, IP, UDP
     from unittest.mock import patch
 
     # Configuration
-    PACKET_SIZE_BYTES = 1500          # Increased to reduce packet rate needed for 1000 Kbps
+    PACKET_SIZE_BYTES = 1500      # Increased to reduce packet rate needed for 1000 Kbps
     DURATION_SECONDS = 5
     TARGET_KBPS = 1000
 
@@ -119,7 +116,7 @@ def test_traffic_processor_throughput():
         mock_urlopen.return_value.status = 200
 
         tp = TrafficProcessor(interface="lo", output_url="http://dummy")
-        tp.gate_ip = "127.0.0.1"
+        # Note: gate_ip is no longer used; only target_ip is needed for direction tracking.
         tp.target_ip = "127.0.0.1"
         tp.cnss_ip = None
 
@@ -134,7 +131,7 @@ def test_traffic_processor_throughput():
         tp.packet_handler = counting_handler
 
         # Build a large packet (1500 bytes total) with non‑management UDP ports
-        payload_len = PACKET_SIZE_BYTES - 14 - 20 - 8   # Ethernet(14)+IP(20)+UDP(8)
+        payload_len = PACKET_SIZE_BYTES - 14 - 20 - 8  # Ethernet(14)+IP(20)+UDP(8)
         pkt = Ether(dst="ff:ff:ff:ff:ff:ff", src="00:00:00:00:00:00") / \
               IP(src="127.0.0.1", dst="8.8.8.8") / \
               UDP(sport=12345, dport=12345) / \
@@ -143,8 +140,8 @@ def test_traffic_processor_throughput():
         start_time = time.time()
         while time.time() - start_time < DURATION_SECONDS:
             tp.packet_handler(pkt)
-        elapsed = time.time() - start_time
 
+        elapsed = time.time() - start_time
         total_bytes = processed_count * PACKET_SIZE_BYTES
         throughput_kbps = (total_bytes * 8) / (elapsed * 1000)
 

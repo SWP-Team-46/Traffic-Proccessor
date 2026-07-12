@@ -10,7 +10,7 @@
 
 ## User Stories
 
-- [User Stories (reports/week2/user-stories.md)](./user-stories.md)
+- [User Stories](./user-stories.md)
 
 ---
 
@@ -19,8 +19,6 @@
 This project currently defines a **graphical web interface** as the primary user-facing artifact.
 
 - **Interactive Prototype (Figma / Balsamiq / etc.):**  
-  [Link to interactive prototype – replace with actual URL]  
-  *Example:* `https://www.figma.com/proto/...`
 
 *Note:* For an API interface, the following would be provided:  
 - OpenAPI specification  
@@ -38,7 +36,7 @@ For a non-graphical interface:
 
 - [MVP v0 Report (reports/week2/mvp-v0-report.md)](./mvp-v0-report.md)
 - **Deployed MVP v0 or Runnable Artifact:**  
-  [Link to deployment / runnable artifact – replace with actual URL]  
+  [Link to deployment / runnable artifact]()
   *Example:* `http://localhost:8080` or `https://tp-mvp-v0.herokuapp.com`
 - **Run Instructions:**  
   ```bash
@@ -48,7 +46,6 @@ For a non-graphical interface:
   npm start
 
   - **Public Video Demonstration:**  
-  [Link to YouTube / Loom – replace with actual URL]
 
 ---
 
@@ -57,9 +54,8 @@ For a non-graphical interface:
 - **Minimal PR/MR Template:**  
   [Link to `.gitlab/merge_request_templates/default.md` or `.github/pull_request_template.md`]
 - **Reviewed PRs/MRs created during Week 2:**  
-  - [PR #1 – Add basic packet counting](replace-with-actual-url)  
-  - [PR #2 – Web dashboard skeleton](replace-with-actual-url)  
-  *(Add actual links as needed)*
+  - [PR #1 – Add basic packet counting]()  
+  - [PR #2 – Web dashboard skeleton]()  
 
 ---
 
@@ -90,19 +86,19 @@ The following links are intentionally excluded from Lychee checks with justifica
 
 ### 1. Protected Default Branch Settings
 
-![Protected Branch Settings](./images/protected-branch-settings.png)
+![Protected Branch Settings]()
 
 ### 2. Example Reviewed PR/MR (Review by another team member)
 
-![Reviewed PR Example](./images/reviewed-pr-example.png)
+![Reviewed PR Example]()
 
 ### 3. Selected Prototype and Interface Artifacts
 
-![Prototype Screenshot](./images/prototype-screenshot.png)
+![Prototype Screenshot]()
 
 ### 4. Deployed MVP v0 or Runnable Artifact
 
-![MVP v0 Running](./images/mvp-v0-running.png)
+![MVP v0 Running]()
 
 ---
 
@@ -138,10 +134,7 @@ MVP v0 establishes the foundational infrastructure for:
 
 - **Published Customer Transcript (if publication permitted):**  
   [Customer Meeting Transcript](./customer-meeting-transcript.md)
-
-- **Customer Meeting Notes (if recording or private sharing refused):**  
-  [Customer Meeting Notes](./customer-meeting-notes.md)
-
+  
 - **Customer Meeting Summary:**  
   [Customer Meeting Summary](./customer-meeting-summary.md)
 
