@@ -1,7 +1,7 @@
 # Exclude problematic URLs and patterns
 exclude = [
     # Ignore all localhost ips
-    "regex:^http://localhost(:\d+)?/"
+    "regex:^http://localhost(:\d+)?/",
     
     # Internal IP
     "http://147.45.234.218:38080/",
