@@ -3,7 +3,7 @@
 ## Status
 **Deprecated**
 
-> This decision was implemented in the `main` branch but has been **removed**. The current system consists only of TProc, CNSS, and PostgreSQL. Gate, Mock Target, and Error Server are no longer part of the architecture.
+> This decision was implemented, but has been **removed**. The current system consists only of TProc, CNSS, and PostgreSQL. Gate, Mock Target, and Error Server are no longer part of the architecture.
 
 ---
 
