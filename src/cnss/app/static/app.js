@@ -90,10 +90,10 @@ function getStatsEndpoint() {
   const runsOutsideBackend =
     window.location.protocol === "file:" ||
     (["localhost", "127.0.0.1"].includes(window.location.hostname) &&
-      window.location.port !== "8080");
+      window.location.port !== "38080");
 
   return runsOutsideBackend
-    ? "http://localhost:8080/packets"
+    ? "http://localhost:38080/packets"
     : `${window.location.origin}/packets`;
 }
 
@@ -770,3 +770,23 @@ const pollTimer = window.setInterval(loadStats, POLL_INTERVAL_MS);
 window.addEventListener("beforeunload", () => {
   window.clearInterval(pollTimer);
 });
+
+const themeSelect = document.getElementById("theme-select");
+
+function applyTheme(theme) {
+  document.body.setAttribute("data-theme", theme);
+  localStorage.setItem("traffic-theme", theme);
+}
+
+if (themeSelect) {
+  const availableThemes = ["classic", "dark", "light", "green"];
+  const savedTheme = localStorage.getItem("traffic-theme");
+  const initialTheme = availableThemes.includes(savedTheme) ? savedTheme : "classic";
+
+  document.body.setAttribute("data-theme", initialTheme);
+  themeSelect.value = initialTheme;
+
+  themeSelect.addEventListener("change", (event) => {
+    applyTheme(event.target.value);
+  });
+}
