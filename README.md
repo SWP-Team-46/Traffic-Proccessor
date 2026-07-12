@@ -83,7 +83,7 @@ For detailed setup, build, and test commands, refer to [AGENTS.md](AGENTS.md#1-s
 ├── AGENTS.md          # Agent‑focused setup and workflow guide\
 ├── CONTRIBUTING.md    # Contribution process and review expectations\
 ├── CHANGELOG.md       # Version history\
-└── LICENSE            # Project license\
+└── LICENSE            # Project license
 
 ---
 
