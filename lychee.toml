@@ -4,7 +4,7 @@ exclude = [
     "regex:^http://localhost(:\d+)?/",
     
     # Internal IP
-    "http://147.45.234.218:38080/",
+    "regex:^http://147.45.234.218(:\d+)?/",
 
     # Private GitLab
     "https://gitlab.pg.innopolis.university/",
