@@ -1,5 +1,4 @@
-# Traffic Processor (TP)
-
+# Traffic Processor
 [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/github/license/SWP-Team-46/Traffic-Proccessor)](LICENSE)
