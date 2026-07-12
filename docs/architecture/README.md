@@ -52,3 +52,26 @@ From the `src` directory:
 
 ```bash
 docker compose up --build
+```
+
+This starts CNSS and PostgreSQL. The dashboard is available at http://localhost:8080.
+
+To run TProc separately:
+```bash
+cd src/Traffic_Processor
+python tproc.py
+```
+
+TProc can be configured via environment variables:
+- `INTERFACE` – network interface to capture from (default: `eth0`)
+- `CNSS_URL` – CNSS endpoint URL (default: `http://cnss:8080/load`)
+- `DELAY` – interval between data pushes in seconds (default: `1`)
+
+## Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/load` | Receive network statistics from TProc |
+| GET | `/packets` | Retrieve current statistics |
+| POST | `/reset` | Reset statistics (sets baseline) |
+| GET | `/root` | Health check endpoint |
