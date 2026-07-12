@@ -19,8 +19,6 @@
 This project currently defines a **graphical web interface** as the primary user-facing artifact.
 
 - **Interactive Prototype (Figma / Balsamiq / etc.):**  
-  [Link to interactive prototype – replace with actual URL]  
-  *Example:* `https://www.figma.com/proto/...`
 
 *Note:* For an API interface, the following would be provided:  
 - OpenAPI specification  
@@ -38,7 +36,7 @@ For a non-graphical interface:
 
 - [MVP v0 Report (reports/week2/mvp-v0-report.md)](./mvp-v0-report.md)
 - **Deployed MVP v0 or Runnable Artifact:**  
-  [Link to deployment / runnable artifact – replace with actual URL]  
+  [Link to deployment / runnable artifact]()
   *Example:* `http://localhost:8080` or `https://tp-mvp-v0.herokuapp.com`
 - **Run Instructions:**  
   ```bash
@@ -48,7 +46,6 @@ For a non-graphical interface:
   npm start
 
   - **Public Video Demonstration:**  
-  [Link to YouTube / Loom – replace with actual URL]
 
 ---
 
