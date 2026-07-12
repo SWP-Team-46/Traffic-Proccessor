@@ -46,7 +46,7 @@ TProc can be configured via environment variables:
 - `DELAY` – interval between data pushes in seconds (default: `1`)
 
 Once running, open the **web dashboard** at  
-**[http://localhost:8080/static/index.html](http://localhost:8080/static/index.html)**
+**[http://localhost:38080/static/index.html](http://localhost:38080/static/index.html)**
 
 For programmatic access, use the CNSS API endpoints (`POST /load`, `GET /packets`, `POST /reset`).
 
