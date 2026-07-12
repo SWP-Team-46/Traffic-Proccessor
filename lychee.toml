@@ -1,19 +1,23 @@
 # Exclude problematic URLs and patterns
+exclude_path = [
+    ".git",
+    "target",
+    "venv",
+    "__pycache__",
+]
 exclude = [
-    # Internal IP
-    "http://147.45.234.218:8080",
+    # Ignore all localhost ips
+    "http://localhost",
     
+    # Internal IP
+    "http://147.45.234.218",
+
     # Private GitLab
-    "https://gitlab.pg.innopolis.university",
+    "https://gitlab.pg.innopolis.university/",
     
     # GitHub settings pages (require login)
     "https://github.com/mrZom49/Traffic-Proccessor-SWP-46/settings/rules/",
     "https://github.com/SWP-Team-46/Traffic-Proccessor/settings/rules/",
-    
-    # Missing local files
-    "reports/week2/images/",
-    "reports/week2/replace-with-actual-url",
-    "reports/week2/customer-meeting-notes.md",
 ]
 
 # Increase timeout

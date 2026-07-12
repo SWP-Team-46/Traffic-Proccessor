@@ -1,24 +1,103 @@
-# Traffic Processor (TP)
+# Traffic Processor
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://www.docker.com/)
+[![License](https://img.shields.io/github/license/SWP-Team-46/Traffic-Proccessor)](LICENSE)
 
-## Project Information
-
-**Project Name:** Traffic Processor (TP)  
-**Short Description:** A network visibility and control tool that captures live packet counters, per-connection statistics, traffic history, and supports blocking, tunneling, and failover behaviours.  
-**LICENSE:** [LICENSE](/LICENSE)
+**Traffic Processor** is a network visibility and control tool that captures live packet counters, per‑connection statistics, and traffic history, while supporting blocking, tunneling, and failover behaviours.
 
 ---
 
-[Development process](/docs/development-process.md)
+## Access the Product
 
-To run via [docker](https://www.docker.com/):
+The easiest way to try the current version is to run the fully containerised stack:
 
-Run in src folder to start:
+Install [docker desktop](https://www.docker.com/products/docker-desktop/)
 
-- cnss, remote server that recieves and shows data collected
-- tp, program that scans your network activity and send data to cnss
+```bash
+git clone https://github.com/SWP-Team-46/Traffic-Proccessor
+cd Traffic-Proccessor/src
+```
 
-```docker compose up --build```
+From the `src` directory:
 
-Run in src folder in the other cmd tab to verify that tp is running
+```bash
+docker compose up --build
+```
 
-```docker exec tproc cat /data/data.txt | head -3```
+This starts CNSS and PostgreSQL. The dashboard is available at http://localhost:38080.
+
+To run Traffic Proccessor:
+```bash
+make build
+$resultId = docker ps --filter "name=???" --format "{{.ID}}" 
+ >> docker run --rm `
+ >>   --network container:$resultId `
+ >>   --cap-add=NET_ADMIN `
+ >>   --cap-add=NET_RAW `
+ >>   -e CNSS_URL="http://host.docker.internal:38080/load" `
+ >>   -e INTERFACE="eth0" `
+ >>   -e TARGET_HOSTNAME="TP" `
+ >>   traffic-processor:latest
+```
+
+TProc can be configured via environment variables:
+- `INTERFACE` – network interface to capture from (default: `eth0`)
+- `CNSS_URL` – CNSS endpoint URL (default: `http://host.docker.internal:38080/load`, works when cnss is on the same device)
+- `TARGET_HOSTNAME` – container name to monitor (default: TP)
+
+Once running, open the **web dashboard** at  
+**[http://localhost:38080/static/index.html](http://localhost:38080/static/index.html)**
+
+For programmatic access, use the CNSS API endpoints (`POST /load`, `GET /packets`, `POST /reset`).
+
+
+
+---
+
+## Documentation
+
+All maintained documentation lives in the [`docs/`](docs) folder:
+
+| Document | Purpose |
+|----------|---------|
+| **[Architecture Overview](docs/architecture)** | System components, static/dynamic/deployment views, and key architectural decisions (ADRs) |
+| **[Testing & Quality](docs/testing.md)** | Test strategy, coverage expectations, and quality automation |
+| **[Roadmap](docs/roadmap.md)** | Planned features and future direction |
+| **[User Acceptance Tests](docs/user-acceptance-tests.md)** | UAT scenarios and sign‑off criteria |
+
+---
+
+## Handover Guidance
+
+For the current product state, handover scope, and customer‑facing instructions, see the **[Customer Handover document](docs/customer-handover.md)**.
+
+---
+
+## Contributing & Agent Workflow
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Practical steps for setting up, branching, opening PRs, and meeting review requirements.
+- **[AGENTS.md](AGENTS.md)** - Actionable setup, build, test, and safety instructions for coding agents.
+
+---
+
+## Repository Structure
+
+.\
+├── src/               # Application source code (TProc, CNSS, Gate, Error Server)\
+├── docs/              # Maintained documentation (architecture, testing, handover, etc.)\
+├── reports/           # Project reports and status updates\
+├── .github/           # CI workflows and issue/PR templates\
+├── AGENTS.md          # Agent‑focused setup and workflow guide\
+├── CONTRIBUTING.md    # Contribution process and review expectations\
+├── CHANGELOG.md       # Version history\
+└── LICENSE            # Project license
+
+---
+
+## License
+
+This project is licensed under the terms in the [LICENSE](LICENSE) file.
+
+---
+
+*For any questions or handover‑related inquiries, please refer to the [Customer Handover document](docs/customer-handover.md) or open an issue in this repository.*

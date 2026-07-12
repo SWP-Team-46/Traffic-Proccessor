@@ -19,21 +19,21 @@ Traffic Processor is a network visibility and control tool that captures live pa
 The static view describes the system's component structure, interfaces, and relationships.
 
 - **Diagram:** [component-diagram.puml](static-view/component-diagram.puml)
-- **Rendered form:** ![component-diagram.svg](static-view/component-diagram.svg)
+- ![component-diagram.svg](static-view/component-diagram.svg)
 
 ### Dynamic View
 
 The dynamic view describes key runtime interactions and workflows, including packet capture, statistics transmission, and dashboard refresh.
 
 - **Diagram:** [sequence-diagram.puml](dynamic-view/sequence-diagram.puml)
-- **Rendered form:** ![sequence-diagram.svg](dynamic-view/sequence-diagram.svg)
+- ![sequence-diagram.svg](dynamic-view/sequence-diagram.svg)
 
 ### Deployment View
 
 The deployment view describes the runtime deployment structure using Docker Compose with two containers (CNSS + PostgreSQL). TProc runs separately and can be deployed independently.
 
 - **Diagram:** [deployment-diagram.puml](deployment-view/deployment-diagram.puml)
-- **Rendered form:** ![deployment-diagram.svg](deployment-view/deployment-diagram.svg)
+- ![deployment-diagram.svg](deployment-view/deployment-diagram.svg)
 
 ## Key Architectural Decisions (ADRs)
 
@@ -54,17 +54,25 @@ From the `src` directory:
 docker compose up --build
 ```
 
-This starts CNSS and PostgreSQL. The dashboard is available at http://localhost:8080.
+This starts CNSS and PostgreSQL. The dashboard is available at http://localhost:38080.
 
-To run TProc separately:
+To run TProc:
 ```bash
-cd src/Traffic_Processor
-python tproc.py
+make build
+$resultId = docker ps --filter "name=???" --format "{{.ID}}" 
+ >> docker run --rm `
+ >>   --network container:$resultId `
+ >>   --cap-add=NET_ADMIN `
+ >>   --cap-add=NET_RAW `
+ >>   -e CNSS_URL="http://host.docker.internal:38080/load" `
+ >>   -e INTERFACE="???" `
+ >>   -e TARGET_HOSTNAME="???" `
+ >>   traffic-processor:latest
 ```
 
 TProc can be configured via environment variables:
 - `INTERFACE` – network interface to capture from (default: `eth0`)
-- `CNSS_URL` – CNSS endpoint URL (default: `http://cnss:8080/load`)
+- `CNSS_URL` – CNSS endpoint URL (default: `http://cnss:38080/load`)
 - `DELAY` – interval between data pushes in seconds (default: `1`)
 
 ## Endpoints
