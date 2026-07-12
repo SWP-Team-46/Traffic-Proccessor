@@ -59,7 +59,6 @@ This starts CNSS and PostgreSQL. The dashboard is available at http://localhost:
 To run TProc:
 ```bash
 make build
-docker compose up
 $resultId = docker ps --filter "name=???" --format "{{.ID}}" 
  >> docker run --rm `
  >>   --network container:$resultId `
