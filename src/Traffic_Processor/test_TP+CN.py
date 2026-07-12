@@ -2,95 +2,87 @@ import pytest
 from unittest.mock import Mock, patch
 import json
 from urllib import error
-import netifaces
 import socket
 from scapy.all import IP, TCP, UDP, ICMP, Ether
-
 from tproc import TrafficProcessor
 
 
 def test_initialization_with_interface():
-    """Test that TrafficProcessor obtains IPs correctly using patched netifaces."""
-    with patch("tproc.netifaces.ifaddresses") as mock_ifaddrs:
-        mock_ifaddrs.return_value = {
-            netifaces.AF_INET: [{"addr": "192.168.1.100"}],
-            netifaces.AF_LINK: [{"addr": "aa:bb:cc:dd:ee:ff"}],
-        }
-        with patch("socket.gethostbyname") as mock_gethostbyname:
-            def side_effect(hostname):
-                if hostname == "cnss":
-                    return "10.0.0.2"
-                if hostname == "mock_target":
-                    return "8.8.8.8"
-                raise socket.gaierror("Unknown host")
-            mock_gethostbyname.side_effect = side_effect
+    """Test that TrafficProcessor initializes attributes correctly."""
+    with patch("socket.gethostbyname") as mock_gethostbyname:
+        def side_effect(hostname):
+            if hostname == "cnss":
+                return "10.0.0.2"
+            if hostname == "mock_target":
+                return "8.8.8.8"
+            raise socket.gaierror("Unknown host")
+        mock_gethostbyname.side_effect = side_effect
 
-            tp = TrafficProcessor(interface="eth0", output_url="http://test", delay=0.5)
+        tp = TrafficProcessor(
+            interface="eth0",
+            output_url="http://test",
+            delay=0.5
+        )
 
-            assert tp.gate_ip == "192.168.1.100"
-            assert tp.target_ip == "8.8.8.8"
-            assert tp.cnss_ip == "10.0.0.2"
-            assert tp.interface == "eth0"
-            assert tp.output_url == "http://test"
-            assert tp.delay == 0.5
-            assert tp.packet_cnt == 0
-            assert tp.incoming_packets == 0
-            assert tp.outgoing_packets == 0
-            assert tp.gate_ip in tp.ip_tracker.ignore_ips
+        # Core attributes
+        assert tp.interface == "eth0"
+        assert tp.output_url == "http://test"
+        assert tp.delay == 0.5
+
+        # Resolved IPs
+        assert tp.cnss_ip == "10.0.0.2"
+        assert tp.target_ip is None   # No TARGET_HOSTNAME set
+
+        # Counters start at zero
+        assert tp.packet_cnt == 0
+        assert tp.incoming_packets == 0
+        assert tp.outgoing_packets == 0
 
 
 def test_packet_handler_statistics():
-    """Test packet_handler increments counters and directions correctly."""
-    with patch("tproc.netifaces.ifaddresses") as mock_ifaddrs:
-        mock_ifaddrs.return_value = {
-            netifaces.AF_INET: [{"addr": "192.168.1.100"}],
-        }
-        with patch("socket.gethostbyname") as mock_gethostbyname:
-            def side_effect(hostname):
-                if hostname == "cnss":
-                    return "10.0.0.2"
-                if hostname == "mock_target":
-                    return "8.8.8.8"
-                raise socket.gaierror("Unknown host")
-            mock_gethostbyname.side_effect = side_effect
+    """Test packet_handler increments counters and determines direction correctly."""
+    with patch("socket.gethostbyname") as mock_gethostbyname:
+        def side_effect(hostname):
+            if hostname == "cnss":
+                return "10.0.0.2"
+            if hostname == "mock_target":
+                return "8.8.8.8"
+            raise socket.gaierror("Unknown host")
+        mock_gethostbyname.side_effect = side_effect
 
-            tp = TrafficProcessor(interface="eth0", output_url="http://test")
+        tp = TrafficProcessor(interface="eth0", output_url="http://test")
+        # Override target_ip to a known value for direction tests
+        tp.target_ip = "192.168.1.100"   # Treat this as "our" IP
+        tp.cnss_ip = None               # Disable management filter for test
 
-            # Override IPs to known test values; disable management filtering
-            tp.gate_ip = "192.168.1.100"
-            tp.target_ip = "8.8.8.8"
-            tp.cnss_ip = None   # Disable management filter for test
+        # Incoming TCP (dst == target_ip)
+        pkt_in = Ether() / IP(src="10.0.0.1", dst="192.168.1.100") / TCP(sport=12345, dport=80)
+        # Outgoing UDP (src == target_ip)
+        pkt_out = Ether() / IP(src="192.168.1.100", dst="8.8.8.8") / UDP(sport=12345, dport=53)
+        # Incoming ICMP (dst == target_ip)
+        pkt_icmp = Ether() / IP(src="1.1.1.1", dst="192.168.1.100") / ICMP()
 
-            # Create packets
-            # Incoming TCP (dst == gate_ip, non‑management port)
-            pkt_in = Ether() / IP(src="10.0.0.1", dst="192.168.1.100") / TCP(sport=12345, dport=80)
-            # Outgoing UDP (src == target_ip, non‑management port)
-            pkt_out = Ether() / IP(src="8.8.8.8", dst="192.168.1.1") / UDP(sport=12345, dport=12345)
-            # Incoming ICMP (dst == gate_ip)
-            pkt_icmp = Ether() / IP(src="1.1.1.1", dst="192.168.1.100") / ICMP()
+        # Process packets
+        tp.packet_handler(pkt_in)
+        tp.packet_handler(pkt_out)
+        tp.packet_handler(pkt_icmp)
 
-            # Process and check after each call to see which fails
-            tp.packet_handler(pkt_in)
-            assert tp.packet_cnt == 1, "First packet not counted"
-            tp.packet_handler(pkt_out)
-            assert tp.packet_cnt == 2, "Second packet not counted"
-            tp.packet_handler(pkt_icmp)
-            assert tp.packet_cnt == 3, "Third packet not counted"
+        # Global counters
+        assert tp.packet_cnt == 3
+        assert tp.bytes_cnt == len(pkt_in) + len(pkt_out) + len(pkt_icmp)
+        assert tp.tcp_cnt == 1
+        assert tp.udp_cnt == 1
+        assert tp.icmp_cnt == 1
+        assert tp.other_cnt == 0
 
-            # Full assertions
-            assert tp.bytes_cnt == len(pkt_in) + len(pkt_out) + len(pkt_icmp)
-            assert tp.tcp_cnt == 1
-            assert tp.udp_cnt == 1
-            assert tp.icmp_cnt == 1
-            assert tp.other_cnt == 0
+        # Direction counters (based on target_ip)
+        assert tp.incoming_packets == 2   # TCP and ICMP have dst==target_ip
+        assert tp.outgoing_packets == 1   # UDP has src==target_ip
+        assert tp.incoming_bytes == len(pkt_in) + len(pkt_icmp)
+        assert tp.outgoing_bytes == len(pkt_out)
 
-            assert tp.incoming_packets == 2   # TCP and ICMP have dst==gate_ip
-            assert tp.outgoing_packets == 1   # UDP has src==target_ip
-            assert tp.incoming_bytes == len(pkt_in) + len(pkt_icmp)
-            assert tp.outgoing_bytes == len(pkt_out)
-
-            # Verify IP tracker was updated
-            assert len(tp.ip_tracker.data) > 0
+        # IP tracker was updated
+        assert len(tp.ip_tracker.data) > 0
 
 
 def test_post_json_success_and_failure():
@@ -113,6 +105,7 @@ def test_post_json_success_and_failure():
         "top_ips": [],
         "status": "online"
     }
+
     with patch.object(tp, "get_stats", return_value=mock_stats):
         with patch("urllib.request.urlopen") as mock_urlopen:
             # Success case
@@ -138,10 +131,12 @@ def test_post_json_success_and_failure():
             error_response = Mock()
             error_response.read.return_value = b'{"error":"bad request"}'
             mock_urlopen.side_effect = error.HTTPError(
-                url="http://localhost:8000", code=400, msg="Bad Request",
-                hdrs={}, fp=error_response
+                url="http://localhost:8000",
+                code=400,
+                msg="Bad Request",
+                hdrs={},
+                fp=error_response
             )
-
             status, body = tp.post_json()
             assert status == 400
             assert body == '{"error":"bad request"}'
