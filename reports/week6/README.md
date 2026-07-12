@@ -14,7 +14,6 @@
    
 7. **Summary of the Week 6 trial-release changes.**  
    The Week 6 trial release corresponds to version **2.1.0**. Key changes include:
-   - CNSS and TP now can be on diffirent devices
    - Separated CNSS and TP startup
    - Website UI overhaul
 8. [**Link to the Week 6 product access artifact**](http://localhost:38080/static/index.html)
