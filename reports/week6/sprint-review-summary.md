@@ -56,4 +56,4 @@ As part of the transition to customer handover, the following items remain for *
 ## Product Backlog Updates
 
 - [PBI-11](https://github.com/SWP-Team-46/Traffic-Proccessor/issues/121) was created to capture customer feedback-related work.
-- Follow-up work includes bug fixes, VM-to-VM compatibility, and final handover preparations.
+- Follow-up work includes bug fixes, Data storage, VM-to-VM compatibility, and final handover preparations.
