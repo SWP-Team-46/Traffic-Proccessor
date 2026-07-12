@@ -34,9 +34,9 @@ The architecture was refined in preparation for handover:
 
 - CNSS and Traffic Processor startup were **decoupled**, allowing each service to run independently.
 - Documentation was updated, including:
-  - [Architecture Overview](https://github.com/SWP-Team-46/Traffic-Proccessor/blob/Asignment-6/reports/week6/docs/architecture)
-  - [Testing & Quality](https://github.com/SWP-Team-46/Traffic-Proccessor/blob/Asignment-6/reports/week6/docs/testing.md)
-  - [Roadmap](https://github.com/SWP-Team-46/Traffic-Proccessor/blob/Asignment-6/reports/week6/docs/roadmap.md)
+  - [Architecture Overview](/docs/architecture)
+  - [Testing & Quality](/docs/testing.md)
+  - [Roadmap](/docs/roadmap.md)
 
 ## Quality and CI Evidence
 
