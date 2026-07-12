@@ -40,7 +40,7 @@ All maintained documentation lives in the [`docs/`](docs) folder:
 
 ---
 
-## 📋 Handover Guidance
+## Handover Guidance
 
 For the current product state, handover scope, and customer‑facing instructions, see the **[Customer Handover document](docs/customer-handover.md)**.
 
@@ -85,7 +85,7 @@ For detailed setup, build, and test commands, refer to [AGENTS.md](AGENTS.md#1-s
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the terms in the [LICENSE](LICENSE) file.
 
