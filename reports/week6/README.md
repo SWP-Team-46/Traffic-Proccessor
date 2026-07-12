@@ -35,7 +35,7 @@
 
 16. **Transition-readiness summary, including what must still happen in Week 7**  
     - Formal handover to the customer is in progress
-    - Week 7 follow‑up work: Bug-fixes, try to add VM-to-VM compatability
+    - Week 7 follow‑up work: Bug-fixes, add data storage, try to add VM-to-VM compatability
 
 17. Due to customer feedback [PBI-11](https://github.com/SWP-Team-46/Traffic-Proccessor/issues/121) was created
 
