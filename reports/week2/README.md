@@ -90,19 +90,19 @@ The following links are intentionally excluded from Lychee checks with justifica
 
 ### 1. Protected Default Branch Settings
 
-![Protected Branch Settings](./images/protected-branch-settings.png)
+![Protected Branch Settings]()
 
 ### 2. Example Reviewed PR/MR (Review by another team member)
 
-![Reviewed PR Example](./images/reviewed-pr-example.png)
+![Reviewed PR Example]()
 
 ### 3. Selected Prototype and Interface Artifacts
 
-![Prototype Screenshot](./images/prototype-screenshot.png)
+![Prototype Screenshot]()
 
 ### 4. Deployed MVP v0 or Runnable Artifact
 
-![MVP v0 Running](./images/mvp-v0-running.png)
+![MVP v0 Running]()
 
 ---
 
