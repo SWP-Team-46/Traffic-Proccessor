@@ -7,10 +7,10 @@ exclude_path = [
 ]
 exclude = [
     # Ignore all localhost ips
-    "http://localhost:\d+?/",
+    "http://localhost",
     
     # Internal IP
-    "http://147.45.234.218:\d+?/",
+    "http://147.45.234.218",
 
     # Private GitLab
     "https://gitlab.pg.innopolis.university/",
