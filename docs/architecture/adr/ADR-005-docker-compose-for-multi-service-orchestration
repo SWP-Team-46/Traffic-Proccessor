@@ -1,7 +1,7 @@
 # ADR-005: Docker Compose for Multi-Service Orchestration
 
 ## Status
-**Partially Implemented** (as of `dev` branch)
+**Partially Implemented**
 
 > The current `docker-compose.yml` defines only **two** services (`cnss` and `postgres`). TProc is **not** containerized in the Compose stack – it runs separately as a standalone Python process.
 
@@ -27,7 +27,7 @@ We decided to use **Docker Compose** to orchestrate all containerized services.
 - **6 services**: Gate, Mock Target, Error Server, CNSS, PostgreSQL, and optionally TProc.
 - All services defined in a single `docker-compose.yml` with explicit dependencies and networks.
 
-### Current Scope (as implemented in `dev`)
+### Current Scope (as implemented in ``)
 - **2 services**: CNSS (FastAPI) and PostgreSQL (14.8).
 - TProc runs **outside** the Compose stack – it is executed manually with `python tproc.py` and configured via environment variables to point to the CNSS container.
 - The Compose network (`tp-network`) still exists to allow CNSS and PostgreSQL to communicate.
@@ -46,7 +46,7 @@ We decided to use **Docker Compose** to orchestrate all containerized services.
 ### Negative
 - **Overhead** – Docker must be installed on all target machines.
 - **Learning curve** – Team members need to understand Docker Compose syntax and networking.
-- **TProc separation** – In `dev`, TProc is not part of the Compose stack, so developers must remember to start it manually. This introduces a potential mismatch between documentation and actual runtime.
+- **TProc separation** – TProc is not part of the Compose stack, so developers must remember to start it manually. This introduces a potential mismatch between documentation and actual runtime.
 
 ### Alternative Considered
 - **Kubernetes** – Rejected due to excessive complexity for this project scope.
@@ -56,11 +56,11 @@ We decided to use **Docker Compose** to orchestrate all containerized services.
 
 ## Related ADRs
 - ADR-002: PostgreSQL for Persistent Storage
-- ADR-004: Gate as Reverse Proxy with IP Filtering (deprecated in `dev`)
+- ADR-004: Gate as Reverse Proxy with IP Filtering (deprecated)
 
 ---
 
-## Usage (dev branch)
+## Usage
 
 ```bash
 cd src
