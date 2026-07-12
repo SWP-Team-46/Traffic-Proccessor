@@ -8,7 +8,7 @@
 
 5. **Sprint 4 Goal, Sprint dates, and short scope summary.**  
    - **Dates:** 6 July 2026 – 12 July 2026
-   - **Goal / Scope:** General improvement on MVP v2, preparations for MVP v3 and customer handover
+   - **Goal / Scope:** General improvement on MVP v2, preparations for customer handover
 
 6. **Total Sprint 4 size in Story Points: 13**  
    
@@ -39,8 +39,7 @@
 
 17. Due to customer feedback [PBI-11](https://github.com/SWP-Team-46/Traffic-Proccessor/issues/121) was created
 
-18. **Explanation of feedback not yet addressed**  
-    All feedback has been addressed
+18. All customer feedback has been addressed
 
 19. **[Roadmap](/docs/roadmap.md)**
 
