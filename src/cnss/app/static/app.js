@@ -1,5 +1,8 @@
 const POLL_INTERVAL_MS = 1000;
-const HISTORY_WINDOW_MS = 60 * 1000;
+const HISTORY_POINT_LIMIT = 60;
+const HISTORY_FETCH_LIMIT = HISTORY_POINT_LIMIT * 2;
+const TIME_GRID_STEP_SECONDS = 10;
+const TIME_GRID_DIVISIONS = HISTORY_POINT_LIMIT / TIME_GRID_STEP_SECONDS;
 const PAGE_SIZE = 10;
 
 const cumulativeKeys = [
@@ -76,6 +79,7 @@ const state = {
   previousRaw: null,
   resetPending: false,
   history: [],
+  historyLoading: false,
   talkers: [],
   currentPage: 1,
 };
@@ -99,6 +103,26 @@ function getStatsEndpoint() {
 }
 
 const statsEndpoint = getStatsEndpoint();
+
+function getHistoryEndpoint() {
+  const params = new URLSearchParams(window.location.search);
+  const configuredEndpoint = params.get("historyApi");
+
+  if (configuredEndpoint) {
+    return configuredEndpoint;
+  }
+
+  try {
+    const url = new URL(statsEndpoint, window.location.href);
+    url.pathname = url.pathname.replace(/\/packets\/?$/, "/history");
+    url.search = "";
+    return url.toString();
+  } catch {
+    return `${window.location.origin}/history`;
+  }
+}
+
+const historyEndpoint = getHistoryEndpoint();
 
 function getResetEndpoint() {
   const params = new URLSearchParams(window.location.search);
@@ -159,7 +183,8 @@ function formatBitValue(value) {
     unitIndex += 1;
   }
 
-  return `${formatNumber(Math.round(amount))} ${units[unitIndex]}`;
+  const digits = unitIndex === 0 || amount >= 100 ? 0 : amount >= 10 ? 1 : 2;
+  return `${formatNumber(amount, digits)} ${units[unitIndex]}`;
 }
 
 function formatBits(value) {
@@ -270,23 +295,76 @@ function calculateDirectionalRates(rawStats) {
   };
 }
 
-function appendHistory(stats) {
-  if (stats.status !== "online") {
-    return;
+function normalizeHistory(payload) {
+  if (!Array.isArray(payload)) {
+    return [];
   }
 
-  state.history.push({
-    timeMs: stats._timeMs,
-    incomingPackets: Math.round(stats.incoming_packets_per_second),
-    outgoingPackets: Math.round(stats.outgoing_packets_per_second),
-    incomingBytes: stats.incoming_bytes_per_second,
-    outgoingBytes: stats.outgoing_bytes_per_second,
-  });
+  const snapshots = payload
+    .map((record) => {
+      const data = record?.data;
+      const capturedTimeMs = Date.parse(data?.timestamp);
+      const storedTimeMs = Date.parse(record?.timestamp);
 
-  const cutoff = stats._timeMs - HISTORY_WINDOW_MS;
-  state.history = state.history
-    .filter((point) => point.timeMs >= cutoff)
+      if (!Number.isFinite(storedTimeMs) || !data || typeof data !== "object") {
+        return null;
+      }
+
+      return {
+        timeMs: storedTimeMs,
+        capturedTimeMs,
+        incomingPackets: positive(
+          data.incoming_packets ?? data.in_packets ?? data.input_packets,
+        ),
+        outgoingPackets: positive(
+          data.outgoing_packets ??
+            data.outcoming_packets ??
+            data.out_packets ??
+            data.output_packets,
+        ),
+        incomingBytes: positive(data.incoming_bytes ?? data.in_bytes ?? data.input_bytes),
+        outgoingBytes: positive(
+          data.outgoing_bytes ?? data.outcoming_bytes ?? data.out_bytes ?? data.output_bytes,
+        ),
+      };
+    })
+    .filter(Boolean)
     .sort((left, right) => left.timeMs - right.timeMs);
+
+  const distinctSnapshots = snapshots.filter(
+    (snapshot, index) => index === 0 || snapshot.timeMs > snapshots[index - 1].timeMs,
+  );
+
+  const points = [];
+
+  for (let index = 1; index < distinctSnapshots.length; index += 1) {
+    const snapshot = distinctSnapshots[index];
+    const previous = distinctSnapshots[index - 1];
+    const capturedElapsedMs = snapshot.capturedTimeMs - previous.capturedTimeMs;
+    const storedElapsedMs = snapshot.timeMs - previous.timeMs;
+    const elapsedSeconds =
+      (capturedElapsedMs > 0 ? capturedElapsedMs : storedElapsedMs) / 1000;
+    const countersReset =
+      snapshot.incomingPackets < previous.incomingPackets ||
+      snapshot.outgoingPackets < previous.outgoingPackets ||
+      snapshot.incomingBytes < previous.incomingBytes ||
+      snapshot.outgoingBytes < previous.outgoingBytes;
+
+    if (elapsedSeconds <= 0 || countersReset) {
+      continue;
+    }
+
+    const rate = (current, before) => (current - before) / elapsedSeconds;
+    points.push({
+      timeMs: snapshot.timeMs,
+      incomingPackets: rate(snapshot.incomingPackets, previous.incomingPackets),
+      outgoingPackets: rate(snapshot.outgoingPackets, previous.outgoingPackets),
+      incomingBytes: rate(snapshot.incomingBytes, previous.incomingBytes),
+      outgoingBytes: rate(snapshot.outgoingBytes, previous.outgoingBytes),
+    });
+  }
+
+  return points.slice(-HISTORY_POINT_LIMIT);
 }
 
 function normalizePercent(value, total) {
@@ -592,15 +670,13 @@ function drawGrid(ctx, plot, maxAbs) {
 }
 
 function formatAxisValue(value) {
-  const sign = value < 0 ? "-" : "";
   const amount = Math.abs(value);
 
   if (state.metric === "packets") {
-    return `${sign}${formatNumber(Math.round(amount))}`;
+    return formatNumber(Math.round(amount));
   }
 
-  const formatted = state.metric === "bits" ? formatBitValue(amount) : formatBytes(amount);
-  return `${sign}${formatted}`;
+  return state.metric === "bits" ? formatBitValue(amount) : formatBytes(amount);
 }
 
 function drawYAxisLabels(ctx, plot, maxAbs) {
@@ -619,10 +695,24 @@ function drawYAxisLabels(ctx, plot, maxAbs) {
 }
 
 function getNiceScaleMaximum(value) {
-  const paddedValue = Math.max(1, value * 1.2);
+  const paddedValue = Math.max(1, value * 1.15);
+
+  if (state.metric !== "packets") {
+    const unitFactors = [2, 4, 6, 8, 10, 20, 40, 60, 80, 100, 200, 400, 600, 800, 1024];
+    let unitSize = 1;
+
+    while (paddedValue >= unitSize * 1024) {
+      unitSize *= 1024;
+    }
+
+    const valueInUnits = paddedValue / unitSize;
+    const unitFactor = unitFactors.find((factor) => valueInUnits <= factor) || 1024;
+    return unitFactor * unitSize;
+  }
+
   const magnitude = 10 ** Math.floor(Math.log10(paddedValue));
   const normalized = paddedValue / magnitude;
-  const niceFactor = [1, 2, 5, 10].find((factor) => normalized <= factor) || 10;
+  const niceFactor = [2, 4, 6, 8, 10].find((factor) => normalized <= factor) || 10;
   return niceFactor * magnitude;
 }
 
@@ -646,17 +736,13 @@ function drawAxes(ctx, plot) {
   ctx.restore();
 }
 
-function drawTimeLabels(ctx, plot, startTime, endTime) {
+function drawTimeGrid(ctx, plot) {
   ctx.save();
   ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--line-dim").trim();
   ctx.setLineDash([3, 7]);
 
-  const tickInterval = 10 * 1000;
-  const firstTick = Math.ceil(startTime / tickInterval) * tickInterval;
-
-  for (let time = firstTick; time <= endTime; time += tickInterval) {
-    const ratio = (time - startTime) / (endTime - startTime);
-    const x = plot.left + ratio * plot.width;
+  for (let division = 0; division <= TIME_GRID_DIVISIONS; division += 1) {
+    const x = plot.left + (division / TIME_GRID_DIVISIONS) * plot.width;
 
     ctx.beginPath();
     ctx.moveTo(x, plot.top);
@@ -667,12 +753,14 @@ function drawTimeLabels(ctx, plot, startTime, endTime) {
   ctx.restore();
 }
 
-function drawSeries(ctx, points, getValue, plot, startTime, endTime, maxAbs, dashed = false) {
+function drawSeries(ctx, points, getValue, plot, maxAbs, dashed = false) {
   if (points.length === 0) {
     return;
   }
 
-  const xFor = (point) => plot.left + ((point.timeMs - startTime) / (endTime - startTime)) * plot.width;
+  const emptySlots = Math.max(0, HISTORY_POINT_LIMIT - points.length);
+  const xFor = (index) =>
+    plot.left + ((emptySlots + index + 1) / HISTORY_POINT_LIMIT) * plot.width;
   const yFor = (value) => plot.top + ((maxAbs - value) / (maxAbs * 2)) * plot.height;
 
   ctx.save();
@@ -682,7 +770,7 @@ function drawSeries(ctx, points, getValue, plot, startTime, endTime, maxAbs, das
   ctx.beginPath();
 
   points.forEach((point, index) => {
-    const x = xFor(point);
+    const x = xFor(index);
     const y = yFor(getValue(point));
 
     if (index === 0) {
@@ -722,9 +810,7 @@ function drawChart() {
     width: rect.width - 112,
     height: rect.height - 36,
   };
-  const points = state.resetPending ? [] : state.history;
-  const endTime = Date.now();
-  const startTime = endTime - HISTORY_WINDOW_MS;
+  const points = state.history;
   const isPackets = state.metric === "packets";
   const scale = state.metric === "bits" ? 8 : 1;
   const incomingKey = isPackets ? "incomingPackets" : "incomingBytes";
@@ -737,10 +823,10 @@ function drawChart() {
 
   drawGrid(ctx, plot, maxAbs);
   drawYAxisLabels(ctx, plot, maxAbs);
-  drawTimeLabels(ctx, plot, startTime, endTime);
+  drawTimeGrid(ctx, plot);
   drawAxes(ctx, plot);
-  drawSeries(ctx, points, (point) => point[incomingKey] * scale, plot, startTime, endTime, maxAbs, false);
-  drawSeries(ctx, points, (point) => -point[outgoingKey] * scale, plot, startTime, endTime, maxAbs, true);
+  drawSeries(ctx, points, (point) => point[incomingKey] * scale, plot, maxAbs, false);
+  drawSeries(ctx, points, (point) => -point[outgoingKey] * scale, plot, maxAbs, true);
 }
 
 function render() {
@@ -781,13 +867,37 @@ async function loadStats() {
     state.stats = adjustedStats;
     state.talkers = normalizeTalkers(payload);
     state.resetPending = false;
-    appendHistory(adjustedStats);
     state.previousRaw = rawStats;
   } catch {
     state.stats = { ...state.stats, status: "offline" };
   }
 
   render();
+}
+
+async function loadHistory() {
+  if (state.historyLoading) {
+    return;
+  }
+
+  state.historyLoading = true;
+
+  try {
+    const url = new URL(historyEndpoint, window.location.href);
+    url.searchParams.set("limit", String(HISTORY_FETCH_LIMIT));
+    const response = await fetch(url, { cache: "no-store" });
+
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`);
+    }
+
+    state.history = normalizeHistory(await response.json());
+    drawChart();
+  } catch {
+    // Keep the last database-backed series visible during a temporary API failure.
+  } finally {
+    state.historyLoading = false;
+  }
 }
 
 async function resetDashboard() {
@@ -807,7 +917,6 @@ async function resetDashboard() {
   state.resetPending = true;
   state.stats = { ...emptyStats };
   state.rawStats = null;
-  state.history = [];
   state.talkers = [];
   render();
 
@@ -871,11 +980,14 @@ window.addEventListener("resize", drawChart);
 
 render();
 loadStats();
+loadHistory();
 
 const pollTimer = window.setInterval(loadStats, POLL_INTERVAL_MS);
+const historyPollTimer = window.setInterval(loadHistory, POLL_INTERVAL_MS);
 
 window.addEventListener("beforeunload", () => {
   window.clearInterval(pollTimer);
+  window.clearInterval(historyPollTimer);
 });
 
 const themeTrigger = document.getElementById("theme-trigger");
