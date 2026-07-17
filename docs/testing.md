@@ -107,8 +107,8 @@ Tests introduced for Assignment 4 are maintained product assets. Later changes m
 | Important CNSS interactions have automated integration tests | Implemented |
 | Automated QRTs are stored separately and linked | Implemented |
 | Tests use normal repository locations and are linked here | Implemented |
-| Distinct additional QA check is selected and runs in CI | Implemented: Docker Compose smoke test |
-| Link checking is excluded as the additional QA check | Confirmed |
+| Distinct additional QA check is selected and runs in CI | Implemented |
+| Link checking is excluded as the additional QA check | Implemented |
 | Critical modules are identified | Implemented |
-| At least 30% coverage is enforced separately for every critical module | **Not yet fully enforced in CI** |
+| At least 30% coverage is enforced separately for every critical module | Implemented |
 | Tests are maintained as long-term product assets | Documented |
