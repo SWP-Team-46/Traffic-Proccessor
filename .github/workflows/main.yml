@@ -91,7 +91,7 @@ jobs:
         # Check that all expected containers are running
         docker ps --filter "status=running" --format "table {{.Names}}" | grep -E "tproc|cnss|cn|postgres"
         
-        # curl --fail http://localhost:8000/health || exit 1 (for /health)
+        curl --fail http://localhost:38080/health || exit 1
         
         echo "All containers are running"
         docker compose down
