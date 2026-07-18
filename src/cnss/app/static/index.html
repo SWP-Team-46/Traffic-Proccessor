@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Traffic Processor</title>
-    <link rel="stylesheet" href="./styles.css?v=17" />
+    <link rel="stylesheet" href="./styles.css?v=25" />
   </head>
   <body>
     <main class="app-shell">
@@ -112,6 +112,46 @@
               <section class="chart-panel">
                 <div class="chart-header">
                   <h2 id="chart-title">Packets Per Second</h2>
+                  <div class="chart-options">
+                    <div class="history-interval-control">
+                      <span class="history-interval-label" id="history-interval-label">Average</span>
+                      <div
+                        class="history-interval-buttons"
+                        role="group"
+                        aria-labelledby="history-interval-label"
+                      >
+                        <button
+                          class="history-interval-button active"
+                          type="button"
+                          data-history-interval="1"
+                          aria-controls="traffic-chart"
+                          aria-pressed="true"
+                        >1s</button>
+                        <button
+                          class="history-interval-button"
+                          type="button"
+                          data-history-interval="5"
+                          aria-controls="traffic-chart"
+                          aria-pressed="false"
+                        >5s</button>
+                        <button
+                          class="history-interval-button"
+                          type="button"
+                          data-history-interval="30"
+                          aria-controls="traffic-chart"
+                          aria-pressed="false"
+                        >30s</button>
+                        <button
+                          class="history-interval-button"
+                          type="button"
+                          data-history-interval="300"
+                          aria-controls="traffic-chart"
+                          aria-pressed="false"
+                        >5m</button>
+                      </div>
+                    </div>
+                    <p class="grid-step">Grid step: <strong id="grid-step-value">10 seconds</strong></p>
+                  </div>
                   <div class="legend">
                     <span><i class="legend-line solid"></i>Incoming</span>
                     <span><i class="legend-line dashed"></i>Outgoing</span>
@@ -152,6 +192,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=16"></script>
+    <script src="./app.js?v=27"></script>
   </body>
 </html>
