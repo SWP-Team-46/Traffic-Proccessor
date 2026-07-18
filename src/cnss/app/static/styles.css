@@ -391,6 +391,7 @@ button {
 
 .chart-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 22px;
   align-items: start;
@@ -399,23 +400,83 @@ button {
 
 .chart-header h2 {
   flex: 1 1 auto;
+  min-width: 190px;
   margin: 0;
   font-size: clamp(16px, 1.15vw, 20px);
   line-height: 1.2;
 }
 
+.chart-options {
+  flex: 0 0 250px;
+  display: grid;
+  gap: 6px;
+}
+
+.history-interval-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.history-interval-label {
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.history-interval-buttons {
+  display: inline-grid;
+  grid-template-columns: repeat(4, minmax(38px, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-soft);
+}
+
+.history-interval-button {
+  min-width: 0;
+  height: 25px;
+  border: 0;
+  border-right: 1px solid var(--line-dim);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0 6px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.history-interval-button:last-child {
+  border-right: 0;
+}
+
+.history-interval-button:hover {
+  background: var(--line-dim);
+}
+
+.history-interval-button.active {
+  background: var(--line);
+  color: var(--active-text);
+}
+
+.history-interval-button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--text-soft);
+  outline-offset: -3px;
+}
+
 .grid-step {
-  flex: 0 0 230px;
   margin: 0;
   color: var(--text-soft);
-  font-size: clamp(13px, 0.95vw, 16px);
+  font-size: 13px;
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .grid-step strong {
   display: inline-block;
-  min-width: 120px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -694,6 +755,7 @@ button {
     min-width: 0;
   }
 
+  .chart-options,
   .grid-step {
     width: auto;
     min-width: 0;

@@ -1,8 +1,9 @@
 const POLL_INTERVAL_MS = 1000;
 const HISTORY_POINT_LIMIT = 60;
-const HISTORY_FETCH_LIMIT = HISTORY_POINT_LIMIT * 2;
-const TIME_GRID_STEP_SECONDS = 10;
-const TIME_GRID_DIVISIONS = HISTORY_POINT_LIMIT / TIME_GRID_STEP_SECONDS;
+const HISTORY_PAGE_SIZE = 1000;
+const HISTORY_INTERVAL_OPTIONS = [1, 5, 30, 300];
+const TIME_GRID_DIVISIONS = 6;
+const POINTS_PER_TIME_GRID = HISTORY_POINT_LIMIT / TIME_GRID_DIVISIONS;
 const PAGE_SIZE = 10;
 
 const cumulativeKeys = [
@@ -35,6 +36,8 @@ const elements = {
   incomingTotal: document.getElementById("incoming-total"),
   outgoingTotal: document.getElementById("outgoing-total"),
   chartTitle: document.getElementById("chart-title"),
+  historyIntervalButtons: Array.from(document.querySelectorAll("[data-history-interval]")),
+  gridStepValue: document.getElementById("grid-step-value"),
   chart: document.getElementById("traffic-chart"),
   resetButton: document.getElementById("reset-button"),
   exportButton: document.getElementById("export-button"),
@@ -79,10 +82,15 @@ const state = {
   previousRaw: null,
   resetPending: false,
   history: [],
+  historyIntervalSeconds: 1,
   historyLoading: false,
+  historyAbortController: null,
+  lastHistorySourceTimeMs: 0,
   talkers: [],
   currentPage: 1,
 };
+
+let historyPollTimer = null;
 
 function getStatsEndpoint() {
   const params = new URLSearchParams(window.location.search);
@@ -292,7 +300,43 @@ function calculateDirectionalRates(rawStats) {
   };
 }
 
-function normalizeHistory(payload) {
+function averageHistoryBucket(bucket) {
+  if (bucket.length === 0) {
+    return null;
+  }
+
+  const average = (key) =>
+    bucket.reduce((total, point) => total + point[key], 0) / bucket.length;
+
+  return {
+    timeMs: bucket[bucket.length - 1].timeMs,
+    incomingPackets: average("incomingPackets"),
+    outgoingPackets: average("outgoingPackets"),
+    incomingBytes: average("incomingBytes"),
+    outgoingBytes: average("outgoingBytes"),
+  };
+}
+
+function averageHistoryPoints(points, intervalSeconds) {
+  if (intervalSeconds === 1) {
+    return points.slice(-HISTORY_POINT_LIMIT);
+  }
+
+  const averagedPoints = [];
+
+  for (
+    let bucketEnd = points.length;
+    bucketEnd >= intervalSeconds && averagedPoints.length < HISTORY_POINT_LIMIT;
+    bucketEnd -= intervalSeconds
+  ) {
+    const bucket = points.slice(bucketEnd - intervalSeconds, bucketEnd);
+    averagedPoints.push(averageHistoryBucket(bucket));
+  }
+
+  return averagedPoints.reverse();
+}
+
+function normalizeHistoryPoints(payload) {
   if (!Array.isArray(payload)) {
     return [];
   }
@@ -355,7 +399,11 @@ function normalizeHistory(payload) {
     });
   }
 
-  return points.slice(-HISTORY_POINT_LIMIT);
+  return points;
+}
+
+function normalizeHistory(payload, intervalSeconds = 1) {
+  return averageHistoryPoints(normalizeHistoryPoints(payload), intervalSeconds);
 }
 
 function normalizePercent(value, total) {
@@ -476,6 +524,30 @@ function normalizeTalkers(payload) {
   });
 }
 
+function formatDuration(seconds) {
+  if (seconds % 60 === 0) {
+    const minutes = seconds / 60;
+    return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+  }
+
+  return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
+}
+
+function formatHistoryInterval(intervalSeconds) {
+  return intervalSeconds >= 60 ? `${intervalSeconds / 60}m` : `${intervalSeconds}s`;
+}
+
+function updateHistoryIntervalControls() {
+  elements.historyIntervalButtons.forEach((button) => {
+    const isActive = Number(button.dataset.historyInterval) === state.historyIntervalSeconds;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+
+  const gridStepSeconds = POINTS_PER_TIME_GRID * state.historyIntervalSeconds;
+  elements.gridStepValue.textContent = formatDuration(gridStepSeconds);
+}
+
 function renderDashboard() {
   const stats = state.resetPending ? { ...emptyStats } : state.stats;
   const isPackets = state.metric === "packets";
@@ -501,8 +573,12 @@ function renderDashboard() {
     isPackets ? stats.outgoing_packets : stats.outgoing_bytes,
   );
 
+  const averageLabel = formatHistoryInterval(state.historyIntervalSeconds);
   elements.chartTitle.textContent = `${unitName} Per Second`;
-  elements.chart.setAttribute("aria-label", `${unitName} per second traffic chart`);
+  elements.chart.setAttribute(
+    "aria-label",
+    `${unitName} per second traffic chart, ${averageLabel} average`,
+  );
   elements.packetCounts.tcp_packets.textContent = formatNumber(stats.tcp_packets);
   elements.packetCounts.udp_packets.textContent = formatNumber(stats.udp_packets);
   elements.packetCounts.icmp_packets.textContent = formatNumber(stats.icmp_packets);
@@ -866,29 +942,134 @@ async function loadStats() {
   render();
 }
 
-async function loadHistory() {
-  if (state.historyLoading) {
-    return;
-  }
+function getHistoryRecordLimit(intervalSeconds) {
+  return (HISTORY_POINT_LIMIT + 1) * intervalSeconds + 1;
+}
 
-  state.historyLoading = true;
+async function fetchHistoryRecords(intervalSeconds, signal) {
+  const recordLimit = getHistoryRecordLimit(intervalSeconds);
+  const records = [];
 
-  try {
+  for (let offset = 0; offset < recordLimit; offset += HISTORY_PAGE_SIZE) {
+    const pageSize = Math.min(HISTORY_PAGE_SIZE, recordLimit - offset);
     const url = new URL(historyEndpoint, window.location.href);
-    url.searchParams.set("limit", String(HISTORY_FETCH_LIMIT));
-    const response = await fetch(url, { cache: "no-store" });
+    url.searchParams.set("limit", String(pageSize));
+    url.searchParams.set("offset", String(offset));
+    const response = await fetch(url, { cache: "no-store", signal });
 
     if (!response.ok) {
       throw new Error(`Backend returned ${response.status}`);
     }
 
-    state.history = normalizeHistory(await response.json());
-    drawChart();
-  } catch {
-    // Keep the last database-backed series visible during a temporary API failure.
-  } finally {
-    state.historyLoading = false;
+    const page = await response.json();
+    if (!Array.isArray(page)) {
+      throw new Error("Backend returned an invalid history response");
+    }
+
+    records.push(...page);
+    if (page.length < pageSize) {
+      break;
+    }
   }
+
+  return records;
+}
+
+async function fetchLatestHistoryRecords(intervalSeconds, signal) {
+  const url = new URL(historyEndpoint, window.location.href);
+  url.searchParams.set("limit", String(intervalSeconds + 1));
+  const response = await fetch(url, { cache: "no-store", signal });
+
+  if (!response.ok) {
+    throw new Error(`Backend returned ${response.status}`);
+  }
+
+  const records = await response.json();
+  if (!Array.isArray(records)) {
+    throw new Error("Backend returned an invalid history response");
+  }
+
+  return records;
+}
+
+async function loadHistory() {
+  if (state.historyLoading) {
+    return;
+  }
+
+  const intervalSeconds = state.historyIntervalSeconds;
+  const controller = new AbortController();
+  state.historyLoading = true;
+  state.historyAbortController = controller;
+
+  try {
+    const records = await fetchHistoryRecords(intervalSeconds, controller.signal);
+
+    if (intervalSeconds !== state.historyIntervalSeconds) {
+      return;
+    }
+
+    state.history = normalizeHistory(records, intervalSeconds);
+    state.lastHistorySourceTimeMs = state.history.at(-1)?.timeMs || 0;
+    drawChart();
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      // Keep the last database-backed series visible during a temporary API failure.
+    }
+  } finally {
+    if (state.historyAbortController === controller) {
+      state.historyAbortController = null;
+      state.historyLoading = false;
+    }
+  }
+}
+
+async function appendLatestHistoryPoint() {
+  if (state.historyLoading) {
+    return;
+  }
+
+  const intervalSeconds = state.historyIntervalSeconds;
+  const controller = new AbortController();
+  state.historyLoading = true;
+  state.historyAbortController = controller;
+
+  try {
+    const records = await fetchLatestHistoryRecords(intervalSeconds, controller.signal);
+
+    if (intervalSeconds !== state.historyIntervalSeconds) {
+      return;
+    }
+
+    const recentPoints = normalizeHistoryPoints(records).slice(-intervalSeconds);
+    const averagedPoint = averageHistoryBucket(recentPoints);
+
+    if (!averagedPoint || averagedPoint.timeMs <= state.lastHistorySourceTimeMs) {
+      return;
+    }
+
+    state.history.push(averagedPoint);
+    state.history = state.history.slice(-HISTORY_POINT_LIMIT);
+    state.lastHistorySourceTimeMs = averagedPoint.timeMs;
+    drawChart();
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      // Keep the current series visible and try again on the next forced update.
+    }
+  } finally {
+    if (state.historyAbortController === controller) {
+      state.historyAbortController = null;
+      state.historyLoading = false;
+    }
+  }
+}
+
+function restartHistoryPolling() {
+  window.clearInterval(historyPollTimer);
+  historyPollTimer = window.setInterval(
+    appendLatestHistoryPoint,
+    state.historyIntervalSeconds * 1000,
+  );
 }
 
 async function resetDashboard() {
@@ -956,6 +1137,32 @@ elements.metricButtons.forEach((button) => {
   });
 });
 
+elements.historyIntervalButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const intervalSeconds = Number(button.dataset.historyInterval);
+
+    if (
+      !HISTORY_INTERVAL_OPTIONS.includes(intervalSeconds) ||
+      intervalSeconds === state.historyIntervalSeconds
+    ) {
+      return;
+    }
+
+    state.historyAbortController?.abort();
+    state.historyAbortController = null;
+    state.historyLoading = false;
+    state.historyIntervalSeconds = intervalSeconds;
+    state.history = [];
+    state.lastHistorySourceTimeMs = 0;
+    localStorage.setItem("traffic-history-interval", String(intervalSeconds));
+
+    updateHistoryIntervalControls();
+    render();
+    loadHistory();
+    restartHistoryPolling();
+  });
+});
+
 elements.resetButton.addEventListener("click", resetDashboard);
 elements.exportButton.addEventListener("click", exportTalkers);
 elements.pagination.addEventListener("click", (event) => {
@@ -969,16 +1176,23 @@ elements.pagination.addEventListener("click", (event) => {
 });
 window.addEventListener("resize", drawChart);
 
+const savedHistoryInterval = Number(localStorage.getItem("traffic-history-interval"));
+if (HISTORY_INTERVAL_OPTIONS.includes(savedHistoryInterval)) {
+  state.historyIntervalSeconds = savedHistoryInterval;
+}
+updateHistoryIntervalControls();
+
 render();
 loadStats();
 loadHistory();
+restartHistoryPolling();
 
 const pollTimer = window.setInterval(loadStats, POLL_INTERVAL_MS);
-const historyPollTimer = window.setInterval(loadHistory, POLL_INTERVAL_MS);
 
 window.addEventListener("beforeunload", () => {
   window.clearInterval(pollTimer);
   window.clearInterval(historyPollTimer);
+  state.historyAbortController?.abort();
 });
 
 const themeTrigger = document.getElementById("theme-trigger");
