@@ -281,17 +281,14 @@ function calculateDirectionalRates(rawStats) {
     };
   }
 
-  const elapsedSeconds = Math.max((rawStats._timeMs - previous._timeMs) / 1000, 0.25);
-  const rate = (current, before, integer = false) => {
-    const value = Math.max(0, (positive(current) - positive(before)) / elapsedSeconds);
-    return integer ? Math.round(value) : value;
-  };
+  const difference = (current, before) =>
+    Math.max(0, positive(current) - positive(before));
 
   return {
-    incoming_packets_per_second: rate(rawStats.incoming_packets, previous.incoming_packets, true),
-    outgoing_packets_per_second: rate(rawStats.outgoing_packets, previous.outgoing_packets, true),
-    incoming_bytes_per_second: rate(rawStats.incoming_bytes, previous.incoming_bytes),
-    outgoing_bytes_per_second: rate(rawStats.outgoing_bytes, previous.outgoing_bytes),
+    incoming_packets_per_second: difference(rawStats.incoming_packets, previous.incoming_packets),
+    outgoing_packets_per_second: difference(rawStats.outgoing_packets, previous.outgoing_packets),
+    incoming_bytes_per_second: difference(rawStats.incoming_bytes, previous.incoming_bytes),
+    outgoing_bytes_per_second: difference(rawStats.outgoing_bytes, previous.outgoing_bytes),
   };
 }
 
@@ -303,7 +300,6 @@ function normalizeHistory(payload) {
   const snapshots = payload
     .map((record) => {
       const data = record?.data;
-      const capturedTimeMs = Date.parse(data?.timestamp);
       const storedTimeMs = Date.parse(record?.timestamp);
 
       if (!Number.isFinite(storedTimeMs) || !data || typeof data !== "object") {
@@ -312,7 +308,6 @@ function normalizeHistory(payload) {
 
       return {
         timeMs: storedTimeMs,
-        capturedTimeMs,
         incomingPackets: positive(
           data.incoming_packets ?? data.in_packets ?? data.input_packets,
         ),
@@ -340,27 +335,23 @@ function normalizeHistory(payload) {
   for (let index = 1; index < distinctSnapshots.length; index += 1) {
     const snapshot = distinctSnapshots[index];
     const previous = distinctSnapshots[index - 1];
-    const capturedElapsedMs = snapshot.capturedTimeMs - previous.capturedTimeMs;
-    const storedElapsedMs = snapshot.timeMs - previous.timeMs;
-    const elapsedSeconds =
-      (capturedElapsedMs > 0 ? capturedElapsedMs : storedElapsedMs) / 1000;
     const countersReset =
       snapshot.incomingPackets < previous.incomingPackets ||
       snapshot.outgoingPackets < previous.outgoingPackets ||
       snapshot.incomingBytes < previous.incomingBytes ||
       snapshot.outgoingBytes < previous.outgoingBytes;
 
-    if (elapsedSeconds <= 0 || countersReset) {
+    if (countersReset) {
       continue;
     }
 
-    const rate = (current, before) => (current - before) / elapsedSeconds;
+    const difference = (current, before) => current - before;
     points.push({
       timeMs: snapshot.timeMs,
-      incomingPackets: rate(snapshot.incomingPackets, previous.incomingPackets),
-      outgoingPackets: rate(snapshot.outgoingPackets, previous.outgoingPackets),
-      incomingBytes: rate(snapshot.incomingBytes, previous.incomingBytes),
-      outgoingBytes: rate(snapshot.outgoingBytes, previous.outgoingBytes),
+      incomingPackets: difference(snapshot.incomingPackets, previous.incomingPackets),
+      outgoingPackets: difference(snapshot.outgoingPackets, previous.outgoingPackets),
+      incomingBytes: difference(snapshot.incomingBytes, previous.incomingBytes),
+      outgoingBytes: difference(snapshot.outgoingBytes, previous.outgoingBytes),
     });
   }
 
