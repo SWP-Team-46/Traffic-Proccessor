@@ -1,5 +1,5 @@
 # Traffic Processor
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](CHANGELOG.md)
 [![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/github/license/SWP-Team-46/Traffic-Proccessor)](LICENSE)
 
@@ -24,7 +24,7 @@ From the `src` directory:
 docker compose up --build
 ```
 
-This starts CNSS and PostgreSQL. The dashboard is available at http://localhost:38080.
+This starts CNSS and PostgreSQL. The dashboard is available at `http://<CNSS>:38080/static/index.html` (Where <CNSS> is replaced by your server IP).
 
 To run Traffic Proccessor:
 ```bash
@@ -46,7 +46,7 @@ TProc can be configured via environment variables:
 - `TARGET_HOSTNAME` – container name to monitor (default: TP)
 
 Once running, open the **web dashboard** at  
-**[http://localhost:38080/static/index.html](http://localhost:38080/static/index.html)**
+`http://<CNSS>:38080/static/index.html` (Where <CNSS> is replaced by your server IP)
 
 For programmatic access, use the CNSS API endpoints (`POST /load`, `GET /packets`, `POST /reset`).
 
