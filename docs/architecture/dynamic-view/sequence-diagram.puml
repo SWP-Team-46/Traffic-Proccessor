@@ -56,15 +56,4 @@ deactivate db
 api --> user: JSON response
 deactivate api
 
-user -> api: POST /reset
-activate api
-
-api -> db: Reset stored statistics
-activate db
-db --> api: Success
-deactivate db
-
-api --> user: HTTP 200 OK
-deactivate api
-
 @enduml
