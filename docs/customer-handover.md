@@ -36,7 +36,7 @@ The product has completed its planned feature implementation and provides:
 
 | Access Point | URL / Endpoint | Purpose |
 |--------------|----------------|---------|
-| **Web Dashboard** | `http://<host-ip>:8080/static/index.html` | View live traffic statistics (packets, bytes, rates, protocol breakdowns, per‑IP stats) |
+| **Web Dashboard** | `http://<CNSS-ip>:38080/static/index.html` | View live traffic statistics (packets, bytes, rates, protocol breakdowns, per‑IP stats) |
 | **CNSS API** | `POST /load`, `GET /packets`, `POST /reset` | Programmatic access to statistics and control |
 
 ### 2.2 Usage Workflow
@@ -44,7 +44,7 @@ The product has completed its planned feature implementation and provides:
 1. Deploy the backend services using the provided deployment commands.
 2. Pull the latest Traffic Processor container image.
 3. Attach the Traffic Processor to the Docker container that should be monitored.
-4. Open the web dashboard at `http://<backend-ip>:38080/static/index.html`.
+4. Open the web dashboard at `http://<CNSS-ip>:38080/static/index.html`.
 5. Monitor live and historical traffic statistics.
 6. Stop or reattach the Traffic Processor whenever monitoring another container is required.
 

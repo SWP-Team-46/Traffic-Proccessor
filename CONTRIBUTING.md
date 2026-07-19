@@ -46,11 +46,6 @@ docker ps --filter "status=running" --format "table {{.Names}}" | grep -E "tproc
 docker compose down
 ```
 
-Quick functional check (if the Traffic Processor should be capturing data):
-```bash
-docker exec tproc cat /data/data.txt | head -3
-```
-
 ## 2. Branch and PR Workflow
 
 We follow a **modified GitHub Flow** with a permanent `main` branch. All contributions are submitted via Pull Requests (PRs).
