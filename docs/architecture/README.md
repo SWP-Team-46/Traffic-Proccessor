@@ -50,30 +50,23 @@ The deployment view describes the runtime deployment structure using Docker Comp
 
 From the `src` directory:
 
+Backend host:
 ```bash
-docker compose up --build
+make backend
 ```
 
-This starts CNSS and PostgreSQL. The dashboard is available at http://localhost:38080.
-
-To run TProc:
+Target host (host running the container to monitor):
 ```bash
-make build
-$resultId = docker ps --filter "name=???" --format "{{.ID}}" 
- >> docker run --rm `
- >>   --network container:$resultId `
- >>   --cap-add=NET_ADMIN `
- >>   --cap-add=NET_RAW `
- >>   -e CNSS_URL="http://host.docker.internal:38080/load" `
- >>   -e INTERFACE="???" `
- >>   -e TARGET_HOSTNAME="???" `
- >>   traffic-processor:latest
+# Attach Traffic Processor to the target container
+make attach TARGET=<container-name> \
+CNSS_URL=http://<backend-ip>:38080/load
 ```
+
 
 TProc can be configured via environment variables:
 - `INTERFACE` – network interface to capture from (default: `eth0`)
-- `CNSS_URL` – CNSS endpoint URL (default: `http://cnss:38080/load`)
-- `DELAY` – interval between data pushes in seconds (default: `1`)
+- `CNSS_URL` – CNSS endpoint URL (default: `http://host.docker.internal:38080/load`)
+- `TARGET` – Docker container that will be monitored (must be specified)
 
 ## Endpoints
 
@@ -81,5 +74,4 @@ TProc can be configured via environment variables:
 |--------|----------|-------------|
 | POST | `/load` | Receive network statistics from TProc |
 | GET | `/packets` | Retrieve current statistics |
-| POST | `/reset` | Reset statistics (sets baseline) |
 | GET | `/root` | Health check endpoint |
