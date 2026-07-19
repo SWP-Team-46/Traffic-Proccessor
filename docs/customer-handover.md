@@ -7,25 +7,26 @@
 
 ## 1. Current Product Status and Handover Scope
 
-The Traffic Processor system is a **fully containerised** network visibility and control solution. It consists of six services orchestrated via Docker Compose:
+The Traffic Processor system is a **containerised** network visibility and control solution designed to monitor the network activity of existing Docker containers. The product consists of the following components:
 
 | Component | Description | Technology |
 |-----------|-------------|------------|
-| **TProc** | Packet sniffer that captures traffic, classifies packets, computes per-IP statistics, and sends data to CNSS. | Python, Scapy |
-| **CNSS** | Control and Status Server – receives statistics, serves the web dashboard, and supports reset functionality. | FastAPI, PostgreSQL |
-| **PostgreSQL** | Persistent storage for CNSS data. | PostgreSQL 14.8 |
+| **Traffic Processor (TP)** | Captures live network traffic from a target container, computes traffic statistics, and forwards them to CNSS. | Python, Scapy |
+| **CNSS** | Control and Status Server – receives statistics from TP, stores historical data, and serves the web dashboard and API. | FastAPI |
+| **PostgreSQL** | Persistent storage for CNSS statistics and historical data. | PostgreSQL 14 |
 
-**Sprint 3 (completed 5 July 2026)** introduced major upgrades:
+The backend services (CNSS and PostgreSQL) are deployed using Docker Compose, while the Traffic Processor runs as a separate container attached to the network namespace of the container being monitored. This allows the monitored application to remain unchanged while traffic is captured independently.
 
-- PostgreSQL for persistent storage (with Alembic migrations)
-- Gate reverse proxy with IP‑based filtering (`BLOCKED_IPS`)
-- Dedicated Error Server for 403 responses
-- Per‑IP statistics collection and display
-- Block traffic based on a blacklist
+The product has completed its planned feature implementation and provides:
 
-All documented User Acceptance Tests (UATs) for Sprint 2 and Sprint 3 have passed.
+- Live packet and bandwidth statistics
+- Per-IP traffic statistics
+- Historical traffic storage
+- Web dashboard for monitoring
+- REST API for programmatic access
+- Remote deployment where backend and monitored containers may run on different hosts
 
-**Handover status:** Formal handover to the customer has **not yet been initiated** (see Section 8 for details).
+**Handover status:** The product is **Ready for independent use**. The customer has received deployment instructions, source code, and supporting documentation required for independent.
 
 ---
 
@@ -40,11 +41,12 @@ All documented User Acceptance Tests (UATs) for Sprint 2 and Sprint 3 have passe
 
 ### 2.2 Usage Workflow
 
-1. **Deploy** the system using Docker Compose (see Section 3).
-2. **Monitor** network traffic via the web dashboard at `http://localhost:8080/static/index.html`.
-3. **Block** unwanted IPs by adding them to the `BLOCKED_IPS` environment variable (see Section 4).
-4. **Query** statistics programmatically via the CNSS API endpoints.
-5. **Reset** statistics using the `POST /reset` endpoint if needed.
+1. Deploy the backend services using the provided deployment commands.
+2. Pull the latest Traffic Processor container image.
+3. Attach the Traffic Processor to the Docker container that should be monitored.
+4. Open the web dashboard at `http://<backend-ip>:38080/static/index.html`.
+5. Monitor live and historical traffic statistics.
+6. Stop or reattach the Traffic Processor whenever monitoring another container is required.
 
 ---
 
@@ -57,42 +59,63 @@ All documented User Acceptance Tests (UATs) for Sprint 2 and Sprint 3 have passe
 
 ### 3.2 Deployment Steps
 
+Backend host:
+
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/SWP-Team-46/Traffic-Proccessor.git
 cd Traffic-Proccessor/src
 
-# 2. (Optional) Configure environment variables – see Section 4 below
+# Start backend services
+make backend
+```
 
-# 3. Start all services
-docker compose up --build -d
+Target host (host running the container to monitor):
 
-# 4. Verify all containers are running
+```bash
+# Attach Traffic Processor to the target container
+make attach TARGET=<container-name> \
+CNSS_URL=http://<backend-ip>:38080/load
+```
+
+Verify deployment:
+
+```bash
 docker ps
+curl http://<backend-ip>:38080/root
+```
 
-# 6. Verify CNSS web server is responding
-curl http://localhost:38080/root
+Open the dashboard:
 
-# 8. Open the web dashboard in a browser
-# http://localhost:38080/static/index.html
+```
+http://<backend-ip>:38080/static/index.html
 ```
 
 ### 3.3 Stopping the System
 
+Stop the Traffic Processor:
+
 ```bash
-docker compose down
+make detach
+```
+
+Stop backend services:
+
+```bash
+make stop
 ```
 
 ## 4. Required Configuration and Secrets‑Handling Expectations
 
 ### 4.1 Environment Variables
 
-The following environment variables can be configured via a `.env` file in the `src` directory or by setting them directly in `docker-compose.yml`:
+The following variables may be configured before deployment.
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `DEV_MODE` | Enables development‑mode responses (e.g., `/root` endpoint returns `{"message": "DEV_MODE is true"}`) | `true` or `false` |
-| PostgreSQL credentials | Set via `docker-compose.yml` environment section for the `postgres` service | (defaults are set internally) |
+| `TARGET` | Docker container that will be monitored | `nginx` |
+| `CNSS_URL` | URL of the CNSS `/load` endpoint | `http://192.168.1.10:38080/load` |
+| `INTERFACE` | Network interface used for packet capture | `eth0` |
 
 ### 4.2 Secrets‑Handling Expectations
 
@@ -114,6 +137,7 @@ The following environment variables can be configured via a `.env` file in the `
 
 - TProc uses **Scapy** for packet capture – this may require elevated privileges (`CAP_NET_RAW`) in production environments.
 - The system is designed for **moderate** network loads; for high‑throughput environments, consider scaling resources (CPU/memory) allocated to containers.
+- The Makefile utilite is set to work in bash and wouldn't work in Powershell. On Windows, consider running commands through git-bash.
 
 ### 5.3 Monitoring
 
@@ -124,6 +148,13 @@ The following environment variables can be configured via a `.env` file in the `
 
 - Backup the PostgreSQL volume regularly if historical statistics are critical.
 - The volume location can be inspected via `docker volume ls` and `docker volume inspect`.
+
+### 5.5 Deployment Notes
+
+- The Traffic Processor runs independently from the backend services.
+- The backend and monitored container may be deployed on different hosts provided the Traffic Processor can reach the configured CNSS endpoint.
+- The Traffic Processor shares the network namespace of the monitored container and therefore requires Docker networking capabilities (`NET_ADMIN` and `NET_RAW`).
+- Reattaching the Traffic Processor to another container requires stopping the current attachment before starting a new one.
 
 ---
 
@@ -137,6 +168,8 @@ The following environment variables can be configured via a `.env` file in the `
 | No traffic data appearing | TProc not capturing or network interface misconfigured | Verify TProc is running; check logs: `docker logs tproc` |
 | PostgreSQL connection errors | Database not initialised or credentials mismatch | Check PostgreSQL logs: `docker logs postgres`; ensure migrations have run |
 | Permission errors (TProc) | Missing `CAP_NET_RAW` or Scapy cannot access network interface | Run with elevated privileges or adjust Docker capabilities in `docker-compose.yml` |
+| Target container not found | Incorrect container name | Confirm the container is running and use the exact Docker container name |
+| Multiple matching containers | Container name is ambiguous | Specify a more specific container name |
 
 ### 6.2 Getting Support
 
@@ -158,7 +191,7 @@ The following environment variables can be configured via a `.env` file in the `
 | **High Availability** | No built‑in clustering or failover | Single point of failure; not suitable for mission‑critical deployments without additional orchestration |
 
 ### 7.2 Unfinished Areas
- <!--Add smth there-->
+Feature, which will allow to distinguish different TPs connected to one CNSS by their ID in database, so the frontend could sort displayed data by concrete module, is not yet implemented.
 
 ### 7.3 Important Risks
 
@@ -170,28 +203,23 @@ The following environment variables can be configured via a `.env` file in the `
 
 ## 8. Handover Status
 
-> **Current Handover Level:** Blocked
+> **Current Handover Level:** Ready for independent use
 >
-> Formal customer handover is **Blocked**. The product is currently in active development, with the team focusing on completing the planned feature set and hardening the system for production use.
+> The product is considered **Ready for independent use**. The vast majority of planned functionality has been implemented, documented, and made available to the customer together with deployment instructions and source code.
 
-The product is functionally complete for the features delivered in Sprint 3 (as of 5 July 2026), and all documented UATs have passed. However, handover activities (such as formal acceptance testing, customer documentation walkthroughs, or production deployment planning) have not yet commenced.
+The customer is able to deploy, configure, operate, and troubleshoot the system independently using the provided documentation.
 
-**Prerequisites and blockers that must be resolved before handover can be initiated:**
+The product has not yet progressed to stronger handover levels because the repository and deployment workflow were delivered only at the end of the last implementation sprint. As a result, the customer has not yet had sufficient operational time to independently use the product and provide long-term operational feedback.
+
+**Remaining actions:**
 
 | Action | Status | Blocking? |
 |--------|--------|-----------|
-| Security hardening (authentication for dashboard/API, TLS) | Not addressed | No - optional |
-| Formal customer acceptance criteria / sign‑off process | Not defined | Yes – must be established with the customer |
-| Final documentation review and walkthrough | Pending | Yes – required before handover |
+| Customer operational evaluation over an extended period | Pending | No |
+| Customer feedback and improvement requests | Ongoing | No |
+| Long-term production experience | Pending | No |
 
-**To initiate and complete a full handover (customer‑deployed/operated), the following steps are required:**
-
-1. Complete all planned sprints and remaining backlog items.
-2. Set up production monitoring, logging, and alerting in collaboration with the customer's operations team.
-3. Conduct a formal handover meeting and walk the customer through deployment, configuration, and troubleshooting.
-4. Complete formal UAT sign‑off by the customer.
-
-Until these actions are completed, the product remains under active development and is not yet ready for independent customer use or production deployment.
+The remaining activities are part of the normal post-handover adoption process and **do not prevent independent customer use**. There are currently no outstanding development-side blockers preventing transition of ownership or day-to-day operation.
 
 ---
 
