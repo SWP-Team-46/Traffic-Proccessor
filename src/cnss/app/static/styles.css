@@ -364,7 +364,6 @@ button {
   border-bottom: 0;
 }
 
-.reset-button,
 .toolbar-button,
 .pagination button {
   border: 2px solid var(--line);
@@ -374,11 +373,6 @@ button {
   cursor: pointer;
 }
 
-.reset-button {
-  height: 33px;
-}
-
-.reset-button:hover,
 .toolbar-button:hover,
 .pagination button:not(:disabled):hover {
   background: var(--line-dim);
