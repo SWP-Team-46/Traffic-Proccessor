@@ -78,10 +78,10 @@ The customer selected **"Accepted with follow-up items"**, indicating that the p
 **Known Limitations:**
 - Reset command does not work with the database  
 - Data from multiple containers is aggregated rather than separated  
-- Traficoster does not work correctly under significant network lag  
+- TP does not work correctly under significant network lag  
 
 **Readiness for Production:**
-- The product is **ready for the deployed use** but not yet polished 
+- The product is **ready** but not yet polished 
 - Follow-up items must be addressed for effective use
 
 
