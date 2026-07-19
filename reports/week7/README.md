@@ -216,7 +216,7 @@ All planned features for MVP v3 are implemented and tested project is ready for 
 ![Sprint milestone](images/sprint-milestone.png)
 ![Final release](images/final-release.png)
 ![Deployment evidence](images/deployment.png)
-![Example PR review](reports/week7/images/pr-review.png)
+![Example PR review](images/pr-review.png)
 
 <!--
 1. Link to `reports/week6/README.md`.
