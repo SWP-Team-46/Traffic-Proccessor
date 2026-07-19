@@ -60,7 +60,7 @@ Target host (host running the container to monitor):
 ```bash
 # Attach Traffic Processor to the target container
 make attach TARGET=<container-name> \
-CNSS_URL=http://<backend-ip>:38080/load
+CNSS_URL=http://<CNSS-ip>:38080/load
 ```
 
 
