@@ -39,7 +39,6 @@ const elements = {
   historyIntervalButtons: Array.from(document.querySelectorAll("[data-history-interval]")),
   gridStepValue: document.getElementById("grid-step-value"),
   chart: document.getElementById("traffic-chart"),
-  resetButton: document.getElementById("reset-button"),
   exportButton: document.getElementById("export-button"),
   talkersBody: document.getElementById("talkers-body"),
   tableSummary: document.getElementById("table-summary"),
@@ -1163,7 +1162,6 @@ elements.historyIntervalButtons.forEach((button) => {
   });
 });
 
-elements.resetButton.addEventListener("click", resetDashboard);
 elements.exportButton.addEventListener("click", exportTalkers);
 elements.pagination.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-page]");
