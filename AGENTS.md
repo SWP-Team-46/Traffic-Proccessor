@@ -18,12 +18,7 @@ cd Traffic-Proccessor/src
 docker compose up --build
 ```
 
-### 1.2 Verify That the Traffic Processor Is Running
-```bash
-docker exec tproc cat /data/data.txt | head -3
-```
-
-### 1.3 Run Linters and Tests (CI‑aligned)
+### 1.2 Run Linters and Tests (CI‑aligned)
 
 The CI pipeline uses flake8 for syntax checking and pytest for unit tests. Run them locally to catch issues before opening a PR:
 ```bash
@@ -37,7 +32,7 @@ flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
 pytest src/ --cov=src/ --cov-report=xml --cov-report=html --maxfail=1 --disable-warnings -v
 ```
 
-### 1.4 Build and Smoke‑Test the Docker Images
+### 1.3 Build and Smoke‑Test the Docker Images
 ```bash
 cd src
 docker compose build
