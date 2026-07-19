@@ -34,39 +34,35 @@ All open and closed issues, prioritised by the Product Owner
 
 ## 5. Sprint 5 Goal, Dates, and Scope Summary
 
-- **Sprint Goal:** [replace with the actual sprint goal from the milestone description or planning].
-- **Sprint Dates:** 
-- **Short Scope Summary:** [replace with a concise list of the main user stories or tasks planned for Sprint 5].
+- **Sprint Goal:** Final touches for customer handover
+- **Sprint Dates:** 2026-07-13 - 2026-07-19
+- **Short Scope Summary:** Complete PBIs based on customer feedback, make final touches on the project
 
 ---
 
 ## 6. Total Sprint 5 Size in Story Points
 
-[replace with the sum of story points of all issues in the Sprint 5 milestone; if not available, state "not specified"]
+**Total sprint size:** 8 Story Points
 
 ---
 
 ## 7. Summary of Week 7 Follow‑up Maintenance and Final MVP v3 Changes
 
-[replace with a summary of any bug fixes, documentation updates, or last‑minute changes made during Week 7; if none, state "No follow‑up work performed"]
+- Database was added
+- UI and backend were tailored to match the new conditions
+- Documentation was updated
 
 ---
 
 ## 8. Final Product Access Artifact
 
-[replace with link to the final release artifact, e.g., GitHub Release page, Docker Hub image, or packaged binary]
+**[Web-dashboard](http://147.45.234.218:38080/static/index.html)**
 
 ---
 
 ## 9. Current Access / Run Instructions
 
-See the "Running the application" section in the [README](/README.md)
-If Docker is used, typical commands might be:
-
-`docker pull [image-name]`  
-`docker run -p [port]:[port] [image-name]`
-
-(Replace with actual instructions from the README)
+[README#Access-The-Product](https://github.com/SWP-Team-46/Traffic-Proccessor#access-the-product)
 
 ---
 
@@ -96,26 +92,28 @@ If Docker is used, typical commands might be:
 
 ## 14. Hosted Documentation Site
 
-[replace with link to the hosted documentation site, e.g., GitHub Pages or Read the Docs]
+[Hosted Documentation Site](https://github.com/SWP-Team-46/Traffic-Proccessor/tree/main/docs)
 
 ---
 
 ## 15. Final Transition Outcome Summary
 
-- **Handover Level Reached:** [replace with the handover level, e.g., Level 1/2/3, as defined in the course]
-- **Customer‑Confirmation Status:** [replace with "Confirmed", "Pending", or "Not yet obtained" and the date, if known]
+**Customer‑Confirmation Status:** Confired with Follow-up Points
 
 ---
 
 ## 16. Summary of Transferred / Delegated Materials
 
-Refer to [docs/customer-handover.md](/docs/customer-handover.md) for the full list. Typically, this includes source code, build scripts, deployment guides, user manuals, API documentation, test suites, and support contacts
+[Link to GitHub repository](/docs/customer-handover.md)
 
 ---
 
 ## 17. Remaining Transition Blockers / Limitations / Support Expectations
 
-[replace with any known blockers, limitations, or support arrangements; if none, state "None identified"]
+Only limitations that are left:
+
+- Data from multiple containers is aggregated rather than separated
+- TP does not work correctly under significant network lag
 
 ---
 
@@ -129,21 +127,21 @@ Refer to [docs/customer-handover.md](/docs/customer-handover.md) for the full li
 
 | Feedback / Issue | Response / Action | Status |
 |------------------|-------------------|--------|
-| [replace]        | [replace]         | [replace] |
-| [replace]        | [replace]         | [replace] |
-| [replace]        | [replace]         | [replace] |
+| **Data attribution by container** | Implement tagging of data at the database level with processor/container ID to allow per-container filtering in the UI | TBD |
+| **Database reset handling** | Either fix the reset functionality for the new version or remove/replace it with a time-window based approach | Resolved |
+| **VM-to-VM compatibility** | Continue work on adding cross-VM support | TBD |
 
 ---
 
 ## 20. Week 7 UAT / Customer‑Trial Results
 
-[replace with a summary of UAT outcomes, including dates, participants, test coverage, defects found, and overall satisfaction, if available]
+UATs were performed by the customer, all of which have passed
 
 ---
 
 ## 21. Final SemVer Release (MVP v3)
 
-[replace with link to the final release tag, e.g., https://github.com/SWP-Team-46/Traffic-Proccessor/releases/tag/v2.2.0] 
+[Final release](https://github.com/SWP-Team-46/Traffic-Proccessor/releases/tag/v2.2.0)
 
 ---
 
@@ -155,7 +153,7 @@ Refer to [docs/customer-handover.md](/docs/customer-handover.md) for the full li
 
 ## 23. Public Sanitized Demo Video
 
-[replace with link to the public demo video]
+[Link to Demo](https://drive.google.com/file/d/1qIGM15IDr53qgfzRT-NrpkvN95DilL9P/view)
 
 ---
 
@@ -197,38 +195,28 @@ Refer to [docs/customer-handover.md](/docs/customer-handover.md) for the full li
 
 ## 30. Final Product Status
 
-[replace with a concise statement of the current state of the product, e.g., "All planned features for MVP v3 are implemented and tested; the system is stable and ready for production use."]
+All planned features for MVP v3 are implemented and tested project is ready for use, although customer addressed some points that could be improved on
 
 ---
 
 ## 31. Contribution Traceability Table
 
-| Team Member | Issues/PRs | Reviews | Testing | Documentation | Transition/Deployment | Demo Day Prep |
-|-------------|------------|---------|---------|---------------|------------------------|---------------|
-| [Name]      | [replace]  | [replace] | [replace] | [replace]     | [replace]              | [replace]     |
-| [Name]      | [replace]  | [replace] | [replace] | [replace]     | [replace]              | [replace]     |
-| [Name]      | [replace]  | [replace] | [replace] | [replace]     | [replace]              | [replace]     |
+| Team member | Issues / planning | PRs / implementation | Review / integration activity | Testing / quality work | Documentation / transition / deployment |
+|---|---|---|---|---|---|
+| **LimpingCoronation** | Addressed **#17 – US-06 Traffic Statistics History** through the database/CNSS work. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/127)) | **#127** packet-state database snapshot (closed); **#128** database/CNSS update (14 commits, merged 16 July). ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/127)) | — | #128 included PostgreSQL configuration for CI testing and finished with **2 checks passed**. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/128)) | Dependency/Poetry fixes and GitHub Actions workflow corrections were included in #128. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/128)) |
+| **jan-ajata** | Implemented and closed **#135 – PBI-12**, retrieving database statistics for selected time windows. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/140)) | **#139** database-backed graph/UI changes (closed); **#140** frontend graph averages (merged); **#144** reset-button removal (merged). ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/139)) | Approved **#128** and **#138**; merged both changes into `main`. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/128)) | #140 completed with **2 checks passed**; #144 completed with **1 of 2 checks passed**. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/140)) | Integrated the database/CNSS update and deployment Makefile into `main` through #128 and #138. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/128)) |
+| **TimLih-h** | Opened **#141 – PBI-13**, defining support for distinguishing multiple Traffic Processors by database ID. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/issues/141)) | Authored **#138**, a deployment-focused Makefile with backend, attach, detach, logs and stop commands. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/138)) | Approved **#128, #140, #143 and #144**; merged #140, #142 and #143 and corrected documentation PR base branches. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/128)) | Updated `user-acceptance-tests.md`; #138 and #140 each completed with **2 checks passed**. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/130)) | Updated customer-handover material, README, UAT documentation and architecture/sequence diagrams in #130; supplied deployment instructions through #138. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/130)) |
+| **mrZom49** | Opened **#129 and #131–#136** for the week-seven report, reflection, meeting summary, handover, presentation and reporting work; closed **#17, #15, #13 and #135**. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/issues?q=is%3Aissue+updated%3A2026-07-13..2026-07-19)) | Authored **#130** Week 7 report (open) and **#137** README update (merged); merged **#144**. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/130)) | Approved **#128** and **#144**. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/128)) | Updated `testing.md`, the main CI workflow and link-checking workflow in the report branch. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/130)) | Updated customer handover, roadmap, README and CHANGELOG, and coordinated the customer-facing Week 7 report and sprint milestone. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/130)) |
+| **inseeee** | Contributed reflection and retrospective deliverables to the Assignment 6/week-seven reporting work. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/130)) | Authored **#142** Assignment 6 reflection and **#143** Assignment 7 retrospective; both merged on 19 July. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/142)) | — | For #142, checked Markdown formatting and absence of private links/secrets; for #143, checked clarity, conciseness and formatting. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/142)) | Authored `reflection.md` and `retrospective.md`; both were incorporated into the Week 7 report branch. ([github.com](https://github.com/SWP-Team-46/Traffic-Proccessor/pull/130)) |
 
 ---
 
 ## 32. Embedded Screenshots (Week 7 Evidence)
 
-- Sprint milestone completionreports/week7/images/sprint-milestone.png
-- Final release page: `reports/week7/images/final-release.png`
-- Deployment evidence: `reports/week7/images/deployment.png`
-- Example PR review: `reports/week7/images/pr-review.png`
-- Customer sign-off: `reports/week7/images/customer-signoff.png`
-
-(Replace with actual image paths or remove if not available.)
-
----
-
-## Conclusion
-
-[replace with a final closing statement about project completion and readiness for Demo Day.]
-
-**Prepared by:** Team 46 - Traffic-Processor  
-**Date:** [replace with current date]
+![Sprint milestone](images/sprint-milestone.png)
+![Final release](images/final-release.png)
+![Deployment evidence](images/deployment.png)
+![Example PR review](reports/week7/images/pr-review.png)
 
 <!--
 1. Link to `reports/week6/README.md`.
