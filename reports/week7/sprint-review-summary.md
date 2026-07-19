@@ -62,7 +62,7 @@ The customer selected **"Accepted with follow-up items"**, indicating that the p
 
 | # | Follow-up Item | Priority | Owner |
 |---|----------------|----------|-------|
-| 1 | **Data attribution by container** – Implement tagging of data at the database level with processor/container ID to allow per-container filtering in the UI | High | TBD |
+| 1 | **Data attribution by container** – Implement tagging of data at the database level with processor/container ID to allow per-container filtering in the UI | Medium-High | TBD |
 | 2 | **Database reset handling** – Either fix the reset functionality for the new version or remove/replace it with a time-window based approach | Medium | TBD |
 | 3 | **Update documentation** – Ensure all deployment documentation is current and aligns with the latest changes | Medium | Team |
 | 4 | **VM-to-VM compatibility** – Continue work on adding cross-VM support | Low | TBD |
