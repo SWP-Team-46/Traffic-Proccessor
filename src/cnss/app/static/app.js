@@ -1,5 +1,9 @@
 const POLL_INTERVAL_MS = 1000;
-const HISTORY_WINDOW_MS = 60 * 1000;
+const HISTORY_POINT_LIMIT = 60;
+const HISTORY_PAGE_SIZE = 1000;
+const HISTORY_INTERVAL_OPTIONS = [1, 5, 30, 300];
+const TIME_GRID_DIVISIONS = 6;
+const POINTS_PER_TIME_GRID = HISTORY_POINT_LIMIT / TIME_GRID_DIVISIONS;
 const PAGE_SIZE = 10;
 
 const cumulativeKeys = [
@@ -32,6 +36,8 @@ const elements = {
   incomingTotal: document.getElementById("incoming-total"),
   outgoingTotal: document.getElementById("outgoing-total"),
   chartTitle: document.getElementById("chart-title"),
+  historyIntervalButtons: Array.from(document.querySelectorAll("[data-history-interval]")),
+  gridStepValue: document.getElementById("grid-step-value"),
   chart: document.getElementById("traffic-chart"),
   resetButton: document.getElementById("reset-button"),
   exportButton: document.getElementById("export-button"),
@@ -76,9 +82,15 @@ const state = {
   previousRaw: null,
   resetPending: false,
   history: [],
+  historyIntervalSeconds: 1,
+  historyLoading: false,
+  historyAbortController: null,
+  lastHistorySourceTimeMs: 0,
   talkers: [],
   currentPage: 1,
 };
+
+let historyPollTimer = null;
 
 function getStatsEndpoint() {
   const params = new URLSearchParams(window.location.search);
@@ -99,6 +111,26 @@ function getStatsEndpoint() {
 }
 
 const statsEndpoint = getStatsEndpoint();
+
+function getHistoryEndpoint() {
+  const params = new URLSearchParams(window.location.search);
+  const configuredEndpoint = params.get("historyApi");
+
+  if (configuredEndpoint) {
+    return configuredEndpoint;
+  }
+
+  try {
+    const url = new URL(statsEndpoint, window.location.href);
+    url.pathname = url.pathname.replace(/\/packets\/?$/, "/history");
+    url.search = "";
+    return url.toString();
+  } catch {
+    return `${window.location.origin}/history`;
+  }
+}
+
+const historyEndpoint = getHistoryEndpoint();
 
 function getResetEndpoint() {
   const params = new URLSearchParams(window.location.search);
@@ -159,7 +191,8 @@ function formatBitValue(value) {
     unitIndex += 1;
   }
 
-  return `${formatNumber(Math.round(amount))} ${units[unitIndex]}`;
+  const digits = unitIndex === 0 || amount >= 100 ? 0 : amount >= 10 ? 1 : 2;
+  return `${formatNumber(amount, digits)} ${units[unitIndex]}`;
 }
 
 function formatBits(value) {
@@ -256,37 +289,121 @@ function calculateDirectionalRates(rawStats) {
     };
   }
 
-  const elapsedSeconds = Math.max((rawStats._timeMs - previous._timeMs) / 1000, 0.25);
-  const rate = (current, before, integer = false) => {
-    const value = Math.max(0, (positive(current) - positive(before)) / elapsedSeconds);
-    return integer ? Math.round(value) : value;
-  };
+  const difference = (current, before) =>
+    Math.max(0, positive(current) - positive(before));
 
   return {
-    incoming_packets_per_second: rate(rawStats.incoming_packets, previous.incoming_packets, true),
-    outgoing_packets_per_second: rate(rawStats.outgoing_packets, previous.outgoing_packets, true),
-    incoming_bytes_per_second: rate(rawStats.incoming_bytes, previous.incoming_bytes),
-    outgoing_bytes_per_second: rate(rawStats.outgoing_bytes, previous.outgoing_bytes),
+    incoming_packets_per_second: difference(rawStats.incoming_packets, previous.incoming_packets),
+    outgoing_packets_per_second: difference(rawStats.outgoing_packets, previous.outgoing_packets),
+    incoming_bytes_per_second: difference(rawStats.incoming_bytes, previous.incoming_bytes),
+    outgoing_bytes_per_second: difference(rawStats.outgoing_bytes, previous.outgoing_bytes),
   };
 }
 
-function appendHistory(stats) {
-  if (stats.status !== "online") {
-    return;
+function averageHistoryBucket(bucket) {
+  if (bucket.length === 0) {
+    return null;
   }
 
-  state.history.push({
-    timeMs: stats._timeMs,
-    incomingPackets: Math.round(stats.incoming_packets_per_second),
-    outgoingPackets: Math.round(stats.outgoing_packets_per_second),
-    incomingBytes: stats.incoming_bytes_per_second,
-    outgoingBytes: stats.outgoing_bytes_per_second,
-  });
+  const average = (key) =>
+    bucket.reduce((total, point) => total + point[key], 0) / bucket.length;
 
-  const cutoff = stats._timeMs - HISTORY_WINDOW_MS;
-  state.history = state.history
-    .filter((point) => point.timeMs >= cutoff)
+  return {
+    timeMs: bucket[bucket.length - 1].timeMs,
+    incomingPackets: average("incomingPackets"),
+    outgoingPackets: average("outgoingPackets"),
+    incomingBytes: average("incomingBytes"),
+    outgoingBytes: average("outgoingBytes"),
+  };
+}
+
+function averageHistoryPoints(points, intervalSeconds) {
+  if (intervalSeconds === 1) {
+    return points.slice(-HISTORY_POINT_LIMIT);
+  }
+
+  const averagedPoints = [];
+
+  for (
+    let bucketEnd = points.length;
+    bucketEnd >= intervalSeconds && averagedPoints.length < HISTORY_POINT_LIMIT;
+    bucketEnd -= intervalSeconds
+  ) {
+    const bucket = points.slice(bucketEnd - intervalSeconds, bucketEnd);
+    averagedPoints.push(averageHistoryBucket(bucket));
+  }
+
+  return averagedPoints.reverse();
+}
+
+function normalizeHistoryPoints(payload) {
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  const snapshots = payload
+    .map((record) => {
+      const data = record?.data;
+      const storedTimeMs = Date.parse(record?.timestamp);
+
+      if (!Number.isFinite(storedTimeMs) || !data || typeof data !== "object") {
+        return null;
+      }
+
+      return {
+        timeMs: storedTimeMs,
+        incomingPackets: positive(
+          data.incoming_packets ?? data.in_packets ?? data.input_packets,
+        ),
+        outgoingPackets: positive(
+          data.outgoing_packets ??
+            data.outcoming_packets ??
+            data.out_packets ??
+            data.output_packets,
+        ),
+        incomingBytes: positive(data.incoming_bytes ?? data.in_bytes ?? data.input_bytes),
+        outgoingBytes: positive(
+          data.outgoing_bytes ?? data.outcoming_bytes ?? data.out_bytes ?? data.output_bytes,
+        ),
+      };
+    })
+    .filter(Boolean)
     .sort((left, right) => left.timeMs - right.timeMs);
+
+  const distinctSnapshots = snapshots.filter(
+    (snapshot, index) => index === 0 || snapshot.timeMs > snapshots[index - 1].timeMs,
+  );
+
+  const points = [];
+
+  for (let index = 1; index < distinctSnapshots.length; index += 1) {
+    const snapshot = distinctSnapshots[index];
+    const previous = distinctSnapshots[index - 1];
+    const countersReset =
+      snapshot.incomingPackets < previous.incomingPackets ||
+      snapshot.outgoingPackets < previous.outgoingPackets ||
+      snapshot.incomingBytes < previous.incomingBytes ||
+      snapshot.outgoingBytes < previous.outgoingBytes;
+
+    if (countersReset) {
+      continue;
+    }
+
+    const difference = (current, before) => current - before;
+    points.push({
+      timeMs: snapshot.timeMs,
+      incomingPackets: difference(snapshot.incomingPackets, previous.incomingPackets),
+      outgoingPackets: difference(snapshot.outgoingPackets, previous.outgoingPackets),
+      incomingBytes: difference(snapshot.incomingBytes, previous.incomingBytes),
+      outgoingBytes: difference(snapshot.outgoingBytes, previous.outgoingBytes),
+    });
+  }
+
+  return points;
+}
+
+function normalizeHistory(payload, intervalSeconds = 1) {
+  return averageHistoryPoints(normalizeHistoryPoints(payload), intervalSeconds);
 }
 
 function normalizePercent(value, total) {
@@ -407,6 +524,30 @@ function normalizeTalkers(payload) {
   });
 }
 
+function formatDuration(seconds) {
+  if (seconds % 60 === 0) {
+    const minutes = seconds / 60;
+    return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+  }
+
+  return `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
+}
+
+function formatHistoryInterval(intervalSeconds) {
+  return intervalSeconds >= 60 ? `${intervalSeconds / 60}m` : `${intervalSeconds}s`;
+}
+
+function updateHistoryIntervalControls() {
+  elements.historyIntervalButtons.forEach((button) => {
+    const isActive = Number(button.dataset.historyInterval) === state.historyIntervalSeconds;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+
+  const gridStepSeconds = POINTS_PER_TIME_GRID * state.historyIntervalSeconds;
+  elements.gridStepValue.textContent = formatDuration(gridStepSeconds);
+}
+
 function renderDashboard() {
   const stats = state.resetPending ? { ...emptyStats } : state.stats;
   const isPackets = state.metric === "packets";
@@ -432,8 +573,12 @@ function renderDashboard() {
     isPackets ? stats.outgoing_packets : stats.outgoing_bytes,
   );
 
+  const averageLabel = formatHistoryInterval(state.historyIntervalSeconds);
   elements.chartTitle.textContent = `${unitName} Per Second`;
-  elements.chart.setAttribute("aria-label", `${unitName} per second traffic chart`);
+  elements.chart.setAttribute(
+    "aria-label",
+    `${unitName} per second traffic chart, ${averageLabel} average`,
+  );
   elements.packetCounts.tcp_packets.textContent = formatNumber(stats.tcp_packets);
   elements.packetCounts.udp_packets.textContent = formatNumber(stats.udp_packets);
   elements.packetCounts.icmp_packets.textContent = formatNumber(stats.icmp_packets);
@@ -592,15 +737,13 @@ function drawGrid(ctx, plot, maxAbs) {
 }
 
 function formatAxisValue(value) {
-  const sign = value < 0 ? "-" : "";
   const amount = Math.abs(value);
 
   if (state.metric === "packets") {
-    return `${sign}${formatNumber(Math.round(amount))}`;
+    return formatNumber(Math.round(amount));
   }
 
-  const formatted = state.metric === "bits" ? formatBitValue(amount) : formatBytes(amount);
-  return `${sign}${formatted}`;
+  return state.metric === "bits" ? formatBitValue(amount) : formatBytes(amount);
 }
 
 function drawYAxisLabels(ctx, plot, maxAbs) {
@@ -619,10 +762,24 @@ function drawYAxisLabels(ctx, plot, maxAbs) {
 }
 
 function getNiceScaleMaximum(value) {
-  const paddedValue = Math.max(1, value * 1.2);
+  const paddedValue = Math.max(1, value * 1.15);
+
+  if (state.metric !== "packets") {
+    const unitFactors = [2, 4, 6, 8, 10, 20, 40, 60, 80, 100, 200, 400, 600, 800, 1024];
+    let unitSize = 1;
+
+    while (paddedValue >= unitSize * 1024) {
+      unitSize *= 1024;
+    }
+
+    const valueInUnits = paddedValue / unitSize;
+    const unitFactor = unitFactors.find((factor) => valueInUnits <= factor) || 1024;
+    return unitFactor * unitSize;
+  }
+
   const magnitude = 10 ** Math.floor(Math.log10(paddedValue));
   const normalized = paddedValue / magnitude;
-  const niceFactor = [1, 2, 5, 10].find((factor) => normalized <= factor) || 10;
+  const niceFactor = [2, 4, 6, 8, 10].find((factor) => normalized <= factor) || 10;
   return niceFactor * magnitude;
 }
 
@@ -646,17 +803,13 @@ function drawAxes(ctx, plot) {
   ctx.restore();
 }
 
-function drawTimeLabels(ctx, plot, startTime, endTime) {
+function drawTimeGrid(ctx, plot) {
   ctx.save();
   ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--line-dim").trim();
   ctx.setLineDash([3, 7]);
 
-  const tickInterval = 10 * 1000;
-  const firstTick = Math.ceil(startTime / tickInterval) * tickInterval;
-
-  for (let time = firstTick; time <= endTime; time += tickInterval) {
-    const ratio = (time - startTime) / (endTime - startTime);
-    const x = plot.left + ratio * plot.width;
+  for (let division = 0; division <= TIME_GRID_DIVISIONS; division += 1) {
+    const x = plot.left + (division / TIME_GRID_DIVISIONS) * plot.width;
 
     ctx.beginPath();
     ctx.moveTo(x, plot.top);
@@ -667,12 +820,14 @@ function drawTimeLabels(ctx, plot, startTime, endTime) {
   ctx.restore();
 }
 
-function drawSeries(ctx, points, getValue, plot, startTime, endTime, maxAbs, dashed = false) {
+function drawSeries(ctx, points, getValue, plot, maxAbs, dashed = false) {
   if (points.length === 0) {
     return;
   }
 
-  const xFor = (point) => plot.left + ((point.timeMs - startTime) / (endTime - startTime)) * plot.width;
+  const emptySlots = Math.max(0, HISTORY_POINT_LIMIT - points.length);
+  const xFor = (index) =>
+    plot.left + ((emptySlots + index + 1) / HISTORY_POINT_LIMIT) * plot.width;
   const yFor = (value) => plot.top + ((maxAbs - value) / (maxAbs * 2)) * plot.height;
 
   ctx.save();
@@ -682,7 +837,7 @@ function drawSeries(ctx, points, getValue, plot, startTime, endTime, maxAbs, das
   ctx.beginPath();
 
   points.forEach((point, index) => {
-    const x = xFor(point);
+    const x = xFor(index);
     const y = yFor(getValue(point));
 
     if (index === 0) {
@@ -722,9 +877,7 @@ function drawChart() {
     width: rect.width - 112,
     height: rect.height - 36,
   };
-  const points = state.resetPending ? [] : state.history;
-  const endTime = Date.now();
-  const startTime = endTime - HISTORY_WINDOW_MS;
+  const points = state.history;
   const isPackets = state.metric === "packets";
   const scale = state.metric === "bits" ? 8 : 1;
   const incomingKey = isPackets ? "incomingPackets" : "incomingBytes";
@@ -737,10 +890,10 @@ function drawChart() {
 
   drawGrid(ctx, plot, maxAbs);
   drawYAxisLabels(ctx, plot, maxAbs);
-  drawTimeLabels(ctx, plot, startTime, endTime);
+  drawTimeGrid(ctx, plot);
   drawAxes(ctx, plot);
-  drawSeries(ctx, points, (point) => point[incomingKey] * scale, plot, startTime, endTime, maxAbs, false);
-  drawSeries(ctx, points, (point) => -point[outgoingKey] * scale, plot, startTime, endTime, maxAbs, true);
+  drawSeries(ctx, points, (point) => point[incomingKey] * scale, plot, maxAbs, false);
+  drawSeries(ctx, points, (point) => -point[outgoingKey] * scale, plot, maxAbs, true);
 }
 
 function render() {
@@ -781,13 +934,142 @@ async function loadStats() {
     state.stats = adjustedStats;
     state.talkers = normalizeTalkers(payload);
     state.resetPending = false;
-    appendHistory(adjustedStats);
     state.previousRaw = rawStats;
   } catch {
     state.stats = { ...state.stats, status: "offline" };
   }
 
   render();
+}
+
+function getHistoryRecordLimit(intervalSeconds) {
+  return (HISTORY_POINT_LIMIT + 1) * intervalSeconds + 1;
+}
+
+async function fetchHistoryRecords(intervalSeconds, signal) {
+  const recordLimit = getHistoryRecordLimit(intervalSeconds);
+  const records = [];
+
+  for (let offset = 0; offset < recordLimit; offset += HISTORY_PAGE_SIZE) {
+    const pageSize = Math.min(HISTORY_PAGE_SIZE, recordLimit - offset);
+    const url = new URL(historyEndpoint, window.location.href);
+    url.searchParams.set("limit", String(pageSize));
+    url.searchParams.set("offset", String(offset));
+    const response = await fetch(url, { cache: "no-store", signal });
+
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`);
+    }
+
+    const page = await response.json();
+    if (!Array.isArray(page)) {
+      throw new Error("Backend returned an invalid history response");
+    }
+
+    records.push(...page);
+    if (page.length < pageSize) {
+      break;
+    }
+  }
+
+  return records;
+}
+
+async function fetchLatestHistoryRecords(intervalSeconds, signal) {
+  const url = new URL(historyEndpoint, window.location.href);
+  url.searchParams.set("limit", String(intervalSeconds + 1));
+  const response = await fetch(url, { cache: "no-store", signal });
+
+  if (!response.ok) {
+    throw new Error(`Backend returned ${response.status}`);
+  }
+
+  const records = await response.json();
+  if (!Array.isArray(records)) {
+    throw new Error("Backend returned an invalid history response");
+  }
+
+  return records;
+}
+
+async function loadHistory() {
+  if (state.historyLoading) {
+    return;
+  }
+
+  const intervalSeconds = state.historyIntervalSeconds;
+  const controller = new AbortController();
+  state.historyLoading = true;
+  state.historyAbortController = controller;
+
+  try {
+    const records = await fetchHistoryRecords(intervalSeconds, controller.signal);
+
+    if (intervalSeconds !== state.historyIntervalSeconds) {
+      return;
+    }
+
+    state.history = normalizeHistory(records, intervalSeconds);
+    state.lastHistorySourceTimeMs = state.history.at(-1)?.timeMs || 0;
+    drawChart();
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      // Keep the last database-backed series visible during a temporary API failure.
+    }
+  } finally {
+    if (state.historyAbortController === controller) {
+      state.historyAbortController = null;
+      state.historyLoading = false;
+    }
+  }
+}
+
+async function appendLatestHistoryPoint() {
+  if (state.historyLoading) {
+    return;
+  }
+
+  const intervalSeconds = state.historyIntervalSeconds;
+  const controller = new AbortController();
+  state.historyLoading = true;
+  state.historyAbortController = controller;
+
+  try {
+    const records = await fetchLatestHistoryRecords(intervalSeconds, controller.signal);
+
+    if (intervalSeconds !== state.historyIntervalSeconds) {
+      return;
+    }
+
+    const recentPoints = normalizeHistoryPoints(records).slice(-intervalSeconds);
+    const averagedPoint = averageHistoryBucket(recentPoints);
+
+    if (!averagedPoint || averagedPoint.timeMs <= state.lastHistorySourceTimeMs) {
+      return;
+    }
+
+    state.history.push(averagedPoint);
+    state.history = state.history.slice(-HISTORY_POINT_LIMIT);
+    state.lastHistorySourceTimeMs = averagedPoint.timeMs;
+    drawChart();
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      // Keep the current series visible and try again on the next forced update.
+    }
+  } finally {
+    if (state.historyAbortController === controller) {
+      state.historyAbortController = null;
+      state.historyLoading = false;
+    }
+  }
+}
+
+function restartHistoryPolling() {
+  window.clearInterval(historyPollTimer);
+  historyPollTimer = window.setInterval(
+    appendLatestHistoryPoint,
+    state.historyIntervalSeconds * 1000,
+  );
 }
 
 async function resetDashboard() {
@@ -807,7 +1089,6 @@ async function resetDashboard() {
   state.resetPending = true;
   state.stats = { ...emptyStats };
   state.rawStats = null;
-  state.history = [];
   state.talkers = [];
   render();
 
@@ -856,6 +1137,32 @@ elements.metricButtons.forEach((button) => {
   });
 });
 
+elements.historyIntervalButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const intervalSeconds = Number(button.dataset.historyInterval);
+
+    if (
+      !HISTORY_INTERVAL_OPTIONS.includes(intervalSeconds) ||
+      intervalSeconds === state.historyIntervalSeconds
+    ) {
+      return;
+    }
+
+    state.historyAbortController?.abort();
+    state.historyAbortController = null;
+    state.historyLoading = false;
+    state.historyIntervalSeconds = intervalSeconds;
+    state.history = [];
+    state.lastHistorySourceTimeMs = 0;
+    localStorage.setItem("traffic-history-interval", String(intervalSeconds));
+
+    updateHistoryIntervalControls();
+    render();
+    loadHistory();
+    restartHistoryPolling();
+  });
+});
+
 elements.resetButton.addEventListener("click", resetDashboard);
 elements.exportButton.addEventListener("click", exportTalkers);
 elements.pagination.addEventListener("click", (event) => {
@@ -869,13 +1176,23 @@ elements.pagination.addEventListener("click", (event) => {
 });
 window.addEventListener("resize", drawChart);
 
+const savedHistoryInterval = Number(localStorage.getItem("traffic-history-interval"));
+if (HISTORY_INTERVAL_OPTIONS.includes(savedHistoryInterval)) {
+  state.historyIntervalSeconds = savedHistoryInterval;
+}
+updateHistoryIntervalControls();
+
 render();
 loadStats();
+loadHistory();
+restartHistoryPolling();
 
 const pollTimer = window.setInterval(loadStats, POLL_INTERVAL_MS);
 
 window.addEventListener("beforeunload", () => {
   window.clearInterval(pollTimer);
+  window.clearInterval(historyPollTimer);
+  state.historyAbortController?.abort();
 });
 
 const themeTrigger = document.getElementById("theme-trigger");
