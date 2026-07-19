@@ -5,48 +5,55 @@ title Sequence Diagram – Live Traffic Capture & Statistics Flow
 
 actor "End User" as user
 participant "CNSS API" as api
-participant "PostgreSQL" as db
-participant "TProc" as tp
-participant "Network Interface" as net
+database "PostgreSQL" as db
 
-net -> tp: Live packets
+box "Target Host"
+participant "Target Container" as target
+participant "Traffic Processor" as tp
+participant "Docker Network" as net
+end box
+
+target <-> net: Application network traffic
+
+net -> tp: Capture packets
 activate tp
+
 tp -> tp: Sniff packet (Scapy)
 tp -> tp: Classify protocol (TCP/UDP/ICMP)
-tp -> tp: Determine direction (in/out)
-tp -> tp: Update IPTracker (per-IP stats)
+tp -> tp: Determine traffic direction
+tp -> tp: Update traffic statistics
+tp -> tp: Update per-IP statistics
+
 deactivate tp
 
-loop Every delay seconds (default 1s)
+loop Every delay seconds (default 1 s)
+
     tp -> tp: Build statistics batch (JSON)
+
     tp -> api: HTTP POST /load
     activate api
-    api -> api: Validate against NetworkStats schema
-    api -> db: Store/update stats
+
+    api -> api: Validate NetworkStats schema
+
+    api -> db: Store latest statistics
     activate db
-    db --> api: Acknowledged
+    db --> api: Success
     deactivate db
+
     api --> tp: HTTP 200 OK
     deactivate api
+
 end
 
 user -> api: GET /packets
 activate api
-api -> db: Retrieve latest stats
-activate db
-db --> api: Return stats
-deactivate db
-api --> user: JSON response
-deactivate api
 
-user -> api: POST /reset
-activate api
-api -> api: Reset baseline counters
-api -> db: Reset stored stats
+api -> db: Retrieve latest statistics
 activate db
-db --> api: Acknowledged
+db --> api: Statistics
 deactivate db
-api --> user: HTTP 200 OK
+
+api --> user: JSON response
 deactivate api
 
 @enduml

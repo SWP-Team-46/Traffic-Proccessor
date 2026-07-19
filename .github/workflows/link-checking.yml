@@ -17,5 +17,4 @@ jobs:
         with:
           # Files to check; here it checks all Markdown files
           args: --verbose --no-progress './**/*.md'
-          # Mark the PR or commit as failed if broken links are found
           fail: true

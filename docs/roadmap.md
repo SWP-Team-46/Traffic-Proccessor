@@ -40,6 +40,9 @@
 
 - 13/07/2026 - 19/07/2026
 - [Milestone](https://github.com/SWP-Team-46/Traffic-Proccessor/milestone/5)
+- Make final steps defined by the customer, perform further tests, leave no critical bugs, finish the documentation
+- [Traffic Statistics History](https://github.com/SWP-Team-46/Traffic-Proccessor/issues/17)
+- [Assignment 6, week 7](https://github.com/SWP-Team-46/Traffic-Proccessor/issues/129)
 
 <!--
 ### Structure the roadmap as a list of Sprints. For each Sprint, include:
