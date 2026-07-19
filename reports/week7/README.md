@@ -159,7 +159,7 @@ UATs were performed by the customer, all of which have passed
 
 ## 24. Demo Day Preparation Summary
 
-[replace]
+After the week 7 rehearsal, presentation was reviewed and several points were shortened in preparation to final presentation
 
 ---
 
