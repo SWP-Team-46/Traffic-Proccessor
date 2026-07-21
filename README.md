@@ -11,48 +11,58 @@
 
 The easiest way to try the current version is to run the fully containerised stack:
 
-Install [docker desktop](https://www.docker.com/products/docker-desktop/)
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed on the target system.
+- Ports **38080** (CNSS web dashboard).
+
+### Deployment Steps
+
+Backend host:
 
 ```bash
-git clone https://github.com/SWP-Team-46/Traffic-Proccessor
+# Clone the repository
+git clone https://github.com/SWP-Team-46/Traffic-Proccessor.git
 cd Traffic-Proccessor/src
+
+# Start backend services
+make backend
 ```
 
-From the `src` directory:
+Target host (host running the container to monitor):
 
 ```bash
-docker compose up --build
+# Attach Traffic Processor to the target container
+make attach TARGET=<container-name> \
+CNSS_URL=http://<backend-ip>:38080/load
 ```
 
-This starts CNSS and PostgreSQL. The dashboard is available at `http://<CNSS>:38080/static/index.html` (Where <CNSS> is replaced by your server IP).
+Verify deployment:
 
-To run Traffic Proccessor:
 ```bash
-make build
-$resultId = docker ps --filter "name=???" --format "{{.ID}}" 
- >> docker run --rm `
- >>   --network container:$resultId `
- >>   --cap-add=NET_ADMIN `
- >>   --cap-add=NET_RAW `
- >>   -e CNSS_URL="http://host.docker.internal:38080/load" `
- >>   -e INTERFACE="eth0" `
- >>   -e TARGET_HOSTNAME="TP" `
- >>   traffic-processor:latest
+docker ps
+curl http://<backend-ip>:38080/root
 ```
 
-TProc can be configured via environment variables:
-- `INTERFACE` – network interface to capture from (default: `eth0`)
-- `CNSS_URL` – CNSS endpoint URL (default: `http://host.docker.internal:38080/load`, works when cnss is on the same device)
-- `TARGET_HOSTNAME` – container name to monitor (default: TP)
+Open the dashboard:
 
-Once running, open the **web dashboard** at  
-`http://<CNSS>:38080/static/index.html` (Where <CNSS> is replaced by your server IP)
+```
+http://<backend-ip>:38080/static/index.html
+```
 
-For programmatic access, use the CNSS API endpoints (`POST /load`, `GET /packets`, `POST /reset`).
+### Stopping the System
 
+Stop the Traffic Processor:
 
+```bash
+make detach
+```
 
----
+Stop backend services:
+
+```bash
+make stop
+```
 
 ## Documentation
 
